@@ -1,0 +1,34 @@
+{
+	"name": "grubwars",
+	"version": "0.1.0",
+	"description": "Fight others in Slack with this team vs team food-themed game! A YSWS submission.",
+	"homepage": "https://github.com/lraj22/grubwars#readme",
+	"bugs": {
+		"url": "https://github.com/lraj22/grubwars/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/lraj22/grubwars.git"
+	},
+	"license": "MIT",
+	"author": "Lakshya Raj",
+	"type": "module",
+	"main": "app.js",
+	"keywords": [
+		"slack",
+		"api",
+		"food",
+		"game",
+		"bot"
+	],
+	"dependencies": {
+		"@slack/bolt": "^4.4.0"
+	},
+	"devDependencies": {
+		"nodemon": "^3.1.10"
+	},
+	"scripts": {
+		"start": "node app.js",
+		"dev": "nodemon --env-file=.env"
+	}
+}
