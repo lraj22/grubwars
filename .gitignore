@@ -1,2 +1,7 @@
+# grubwars specific
+data
+backups
+
+# general
 node_modules
 .env
