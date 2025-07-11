@@ -5,16 +5,32 @@ import { createHash } from "node:crypto";
 const dataFile = "data/grubwars.json";
 const dataFilePath = join(import.meta.dirname, dataFile);
 let grubwars = JSON.parse(fs.readFileSync(dataFilePath, "utf8"));
+const shortMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const logStream = fs.createWriteStream(join(import.meta.dirname, "data/grubwars.log"), {
+	"flags": "a",
+});
 
 function hourlyBackup (scheduleNext) {
-	console.log(`💾 Hourly backup! ${scheduleNext ? "S" : "Not s"}cheduling next.`);
+	log(`💾 Hourly backup! ${scheduleNext ? "S" : "Not s"}cheduling next.`);
+	
+	// schedule next if necessary
+	if (scheduleNext) {
+		let nextBackupTime = new Date();
+		nextBackupTime.setMinutes(0);
+		nextBackupTime.setSeconds(0);
+		nextBackupTime.setMilliseconds(0);
+		nextBackupTime.setHours(nextBackupTime.getHours() + 1);
+		setTimeout(() => {
+			hourlyBackup(true);
+		}, nextBackupTime - Date.now());
+	}
 	
 	// ensure backup is necessary (i.e. not duplicate)
 	const luhFile = join(import.meta.dirname, "data/lastUpdatedHash.txt");
 	const lastUpdatedHash = fs.readFileSync(luhFile, "utf8");
 	const currentHash = createHash("sha256").update(JSON.stringify(grubwars)).digest("hex");
 	if (currentHash === lastUpdatedHash) {
-		console.log(`💾 Save canceled: hash matched (${currentHash})`)
+		log(`💾 Save canceled: hash matched (${currentHash})`)
 		return;
 	}
 	
@@ -33,22 +49,37 @@ function hourlyBackup (scheduleNext) {
 	
 	// update new hash, too
 	fs.writeFileSync(luhFile, currentHash);
-	console.log(`💾 Saved with new hash ${currentHash}`);
-	
-	// schedule next if necessary
-	if (!scheduleNext) return;
-	let nextBackupTime = new Date();
-	nextBackupTime.setMinutes(0);
-	nextBackupTime.setSeconds(0);
-	nextBackupTime.setMilliseconds(0);
-	nextBackupTime.setHours(nextBackupTime.getHours() + 1);
-	setTimeout(() => {
-		hourlyBackup(true);
-	}, nextBackupTime - Date.now());
+	log(`💾 Saved with new hash ${currentHash}`);
 }
 
 // start the loop now
 hourlyBackup(true);
+
+function log (message) {
+	var now = new Date();
+	var timecode = "["
+		+ now.getFullYear()
+		+ "_"
+		+ shortMonths[now.getMonth()]
+		+ "_"
+		+ pad0(now.getDate())
+		+ ", "
+		+ pad0(now.getHours())
+		+ ":"
+		+ pad0(now.getMinutes())
+		+ ":"
+		+ pad0(now.getSeconds())
+		+ "."
+		+ pad0(now.getMilliseconds(), 3)
+		+ "] ";
+	if (typeof message === "object") message = JSON.stringify(message);
+	console.log(timecode + message);
+	logStream.write(timecode + message + "\n");
+}
+
+function getGrubwars () {
+	return cloneObj(grubwars);
+}
 
 function saveState (data) {
 	// update 'grubwars' so hourly backup is in the know
@@ -87,4 +118,6 @@ function cloneObj (obj) {
 export {
 	dataFilePath,
 	saveState,
+	getGrubwars,
+	log,
 };
