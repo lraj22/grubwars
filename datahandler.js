@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
+import app from "./client.js";
+import { getUserAt } from "./helper.js";
 
 const dataFile = "data/grubwars.json";
 const dataFilePath = join(import.meta.dirname, dataFile);
@@ -77,6 +79,62 @@ function log (message) {
 	logStream.write(timecode + message + "\n");
 }
 
+async function logInteraction (interaction) {
+	let user = await userRef(interaction);
+	let channel = interaction.payload.channel_name || interaction.body.channel.name || "<no channel>";
+	
+	if (interaction.command) {
+		log(`[${channel}] ${user} ran command ${interaction.command.command} ${JSON.stringify(await userRefify(interaction.command.text))}`);
+	} else if (interaction.action) {
+		log(`[${channel}] ${user} clicked action ${interaction.action.action_id}`);
+	} else {
+		log(`Unknown interaction logged: ${JSON.stringify(interaction, null, "\t")}`);
+	}
+}
+
+async function userRef (interaction, defaultName) {
+	// get id and name from interaction
+	let id, name;
+	if (typeof interaction === "string") {
+		id = interaction;
+	} else {
+		id = interaction.payload.user_id || interaction.body.user.id || "<no id>";
+	}
+	
+	if (id in grubwars.players) {
+		// player registered! Use preferred name
+		name = grubwars.players[id].preferredName;
+		return `<u:${name}>`;
+	} else if (typeof interaction === "string") {
+		// just an ID
+		if (defaultName) name = defaultName;
+		else {
+			name = (await app.client.users.info({
+				"user": id
+			})).user.name;
+			log(`🔍 Couldn't find ${id}, lookup resulted in ${name}`);
+		}
+	} else {
+		// an interaction object. Let's check its properties
+		name = interaction.payload.user_name || interaction.body.user.name || defaultName || "<no name>";
+	}
+	
+	// return generic response
+	return `<@${id}|${name}>`;
+}
+
+async function userRefify (text, limit) {
+	if (!limit) limit = Infinity;
+	while (limit--) {
+		let [id, name] = getUserAt(text);
+		if (!id) break;
+		
+		let ref = await userRef(id, name);
+		text = text.replace(/<@[A-Z0-9]+\|.*>/, ref);
+	}
+	return text;
+}
+
 function getGrubwars () {
 	return cloneObj(grubwars);
 }
@@ -116,8 +174,9 @@ function cloneObj (obj) {
 }
 
 export {
-	dataFilePath,
 	saveState,
 	getGrubwars,
 	log,
+	logInteraction,
+	userRef,
 };

@@ -10,6 +10,6 @@ const app = new App({
 });
 
 await app.start(process.env.PORT || 3000);
-log(`✅ Slack bot ready in ${Date.now() - startTime}ms.`);
+log(`⚡ Slack bot ready in ${Date.now() - startTime}ms.`);
 
 export default app;

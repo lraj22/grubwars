@@ -1,5 +1,7 @@
 import { readFileSync } from "node:fs";
-import { dataFilePath, getGrubwars } from "./datahandler.js";
+import { join } from "node:path";
+import { getGrubwars } from "./datahandler.js";
+const dataFilePath = join(import.meta.dirname, "data/grubwars.json");
 let grubwars = JSON.parse(readFileSync(dataFilePath, "utf8"));
 
 export function getTeamOf (playerId, expanded) {
@@ -12,4 +14,16 @@ export function getTeamOf (playerId, expanded) {
 	if (inSnackclub) return expanded ? "Snack Club" : "snackclub";
 	
 	return null;
+}
+
+export function getUserAt (text) {
+	text = text.trim();
+	let targetId = text.match(/<@([A-Z0-9]+)\|.*>/);
+	let targetName;
+	if (targetId) {
+		targetId = targetId[1];
+		targetName = text.match(/<@[A-Z0-9]+\|(.*)>/)[1];
+		return [targetId, targetName];
+	}
+	return [null, null];
 }

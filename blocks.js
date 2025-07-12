@@ -1,6 +1,6 @@
 const blocks = {};
 
-blocks.joinTeam = [
+blocks.joinTeam = JSON.stringify([
 	{
 		"type": "section",
 		"text": {
@@ -36,6 +36,53 @@ blocks.joinTeam = [
 			}
 		]
 	},
-];
+]);
 
-export default blocks;
+blocks.stats = JSON.stringify([
+	{
+		"type": "header",
+		"text": {
+			"type": "plain_text",
+			"text": "{user}'s stats",
+			"emoji": true
+		}
+	},
+	{
+		"type": "section",
+		"fields": [
+			{
+				"type": "mrkdwn",
+				"text": "*Inventory*\n{inventory}"
+			},
+			{
+				"type": "mrkdwn",
+				"text": "*Team*\n{team}"
+			},
+			{
+				"type": "mrkdwn",
+				"text": "*Score*\n{score}"
+			},
+			{
+				"type": "mrkdwn",
+				"text": "*Effects*\n{effects}"
+			}
+		]
+	}
+]);
+
+function getBlock (blockName, data) {
+	let block = blocks[blockName];
+	if (!block) return {};
+	if (!data) data = {};
+	
+	return JSON.parse(block, (_, value) => {
+		if (typeof value === "string") {
+			return value.replace(/{(\w+)}/g, (_, k) => (
+				(typeof data[k] === "undefined") ? `{${k}}` : data[k]
+			));
+		}
+		else return value;
+	});
+}
+
+export default getBlock;
