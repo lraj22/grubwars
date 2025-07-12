@@ -130,7 +130,7 @@ async function userRefify (text, limit) {
 		if (!id) break;
 		
 		let ref = await userRef(id, name);
-		text = text.replace(/<@[A-Z0-9]+\|.*>/, ref);
+		text = text.replace(/<@[A-Z0-9]+?\|.+?>/, ref);
 	}
 	return text;
 }

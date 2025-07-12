@@ -18,11 +18,11 @@ export function getTeamOf (playerId, expanded) {
 
 export function getUserAt (text) {
 	text = text.trim();
-	let targetId = text.match(/<@([A-Z0-9]+)\|.*>/);
+	let targetId = text.match(/<@([A-Z0-9]+?)\|.+?>/);
 	let targetName;
 	if (targetId) {
 		targetId = targetId[1];
-		targetName = text.match(/<@[A-Z0-9]+\|(.*)>/)[1];
+		targetName = text.match(/<@[A-Z0-9]+?\|(.+?)>/)[1];
 		return [targetId, targetName];
 	}
 	return [null, null];

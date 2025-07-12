@@ -28,10 +28,18 @@ app.command("/grubwars-join", async (interaction) => {
 		return;
 	}
 	
+	function memberCount (team) {
+		let count = grubwars.teams[team].length;
+		return (count === 1) ? "1 member" : `${count} members`;
+	}
+	
 	// allow them to join
 	await interaction.respond({
 		"response_type": "ephemeral",
-		"blocks": getBlock("joinTeam"),
+		"blocks": getBlock("joinTeam", {
+			"hg-count": memberCount("hackgrub"),
+			"sc-count": memberCount("snackclub"),
+		}),
 		"delete_original": true,
 	});
 });
@@ -70,6 +78,32 @@ app.command("/grubwars-stats", async (interaction) => {
 		"response_type": "ephemeral",
 		"blocks": getBlock("stats", data),
 	});
+});
+
+app.command("/grubwars-dev", async (interaction) => {
+	// acknowledge & log
+	await interaction.ack();
+	await logInteraction(interaction);
+	let intRef = await userRef(interaction);
+	
+	// only devs can use this command (Lakshya & Lavith Raj)
+	if (!(["U08QZ5TQFMF", "U0947SL6AKB"].includes(interaction.body.user_id))) {
+		log(`❌ ${intRef} tried to use /grubwars-dev, lol!`);
+		await interaction.respond({
+			"response_type": "ephemeral",
+			"text": "You are not allowed to use this command, lol.",
+		});
+		return;
+	}
+	
+	let [targetId] = getUserAt(interaction.command.text);
+	if (!targetId) {
+		targetId = interaction.body.user_id;
+	}
+	grubwars.teams.hackgrub = grubwars.teams.hackgrub.filter(id => id !== targetId);
+	grubwars.teams.snackclub = grubwars.teams.snackclub.filter(id => id !== targetId);
+	if (interaction.command.text.includes("!")) delete grubwars.players[targetId];
+	saveState(grubwars);
 });
 
 app.action(/^join-(hackgrub|snackclub)$/, async (interaction) => {

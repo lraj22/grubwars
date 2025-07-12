@@ -18,7 +18,7 @@ blocks.joinTeam = JSON.stringify([
 				"type": "button",
 				"text": {
 					"type": "plain_text",
-					"text": ":burger-grub: Team Hack Grub",
+					"text": ":burger-grub: Team Hack Grub ({hg-count})",
 					"emoji": true
 				},
 				"value": "hackgrub",
@@ -28,7 +28,7 @@ blocks.joinTeam = JSON.stringify([
 				"type": "button",
 				"text": {
 					"type": "plain_text",
-					"text": ":snack: Team Snack Club",
+					"text": ":snack: Team Snack Club ({sc-count})",
 					"emoji": true
 				},
 				"value": "snackclub",
@@ -77,7 +77,7 @@ function getBlock (blockName, data) {
 	
 	return JSON.parse(block, (_, value) => {
 		if (typeof value === "string") {
-			return value.replace(/{(\w+)}/g, (_, k) => (
+			return value.replace(/{(.+?)}/g, (_, k) => (
 				(typeof data[k] === "undefined") ? `{${k}}` : data[k]
 			));
 		}
