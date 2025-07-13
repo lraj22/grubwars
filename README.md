@@ -51,9 +51,9 @@ Notes:
 ### Basic
 
 Low Fat Milk: +/- 5 pts <br>
-Red Apple: +/- 10 pts <br>
-Chocolate Milk: +/- 15 pts <br>
-Grilled Cheese Sandwich: +/- 20 pts <br>
+Red Apple: +/- 8 pts <br>
+Chocolate Milk: +/- 12 pts <br>
+Grilled Cheese Sandwich: +/- 15 pts <br>
 
 ### Uncommon
 
@@ -62,8 +62,8 @@ Pizza: (use) full team +4 pts (throw) target's full team -3 pts <br>
 
 ### Rare
 
-Lemon Drizzle Cake: (use) +20% for next hour (throw) target has -30% for next 12 hours <br>
-Spork: (use)  <br>
+Lemon Drizzle Cake: (use) +20% points for next hour (throw) target has -30% points for next 12 hours <br>
+Spork: (use) +5% throw accuracy for 1 hour (throw) target has -10% throw accuracy for 2 hours <br>
 Wine:
 - (use) every 5 grapes = +0.1x multiplier, i.e. 25 grapes = 1.5x multiplier (for points and damage). throw success rate drops to random(50-70)% <br>
 - (throw) target's attacks are 10% less effective; their success rates also drop to random(50-70)% <br>
@@ -72,7 +72,7 @@ Wine:
 
 Pizza Box: (use) need 4 pizza slices, +75 pts (throw) -20 pts & target loses random(2-4) pizza slices <br>
 Grapes: (use) need 20+ grapes, make wine; more grapes, more potent wine (throw) -2 pts <br>
-Bully: (use/throw) if 3 people use this towards the same target, that target's inventory & lunch money is stolen and redistributed between the bullies <br>
+Bullying Power: (use/throw) if 3 people use this towards the same target, that target's inventory & lunch money is stolen and redistributed between the bullies <br>
 
 ### Spells
 

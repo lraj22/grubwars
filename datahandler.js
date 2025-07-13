@@ -18,10 +18,7 @@ function hourlyBackup (scheduleNext) {
 	// schedule next if necessary
 	if (scheduleNext) {
 		let nextBackupTime = new Date();
-		nextBackupTime.setMinutes(0);
-		nextBackupTime.setSeconds(0);
-		nextBackupTime.setMilliseconds(0);
-		nextBackupTime.setHours(nextBackupTime.getHours() + 1);
+		nextBackupTime.setHours(nextBackupTime.getHours() + 1, 0, 0, 0); // next hour
 		setTimeout(() => {
 			hourlyBackup(true);
 		}, nextBackupTime - Date.now());

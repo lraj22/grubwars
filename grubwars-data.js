@@ -1,3 +1,6 @@
+const grubwarsEventChannelId = "C095GK7G5FG";
+
+// items details
 const items = {
 	// rarity: basic
 	"lowFatMilk": {
@@ -10,31 +13,31 @@ const items = {
 	"apple": {
 		"name": "Apple",
 		"rarity": "basic",
-		"use": "+10 points",
-		"throw": "-10 points",
+		"use": "+8 points",
+		"throw": "-8 points",
 		"image": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Red_Apple.jpg/800px-Red_Apple.jpg",
 	},
 	"chocolateMilk": {
 		"name": "Chocolate Milk",
 		"rarity": "basic",
-		"use": "+15 points",
-		"throw": "-15 points",
+		"use": "+12 points",
+		"throw": "-12 points",
 		"image": "https://driftwooddairy.com/__static/0c3f5d72ea73b28165da4ce860a375da/chocnon.jpg",
 	},
 	"grilledCheeseSandwich": {
 		"name": "Grilled Cheese Sandwich",
 		"rarity": "basic",
-		"use": "+20 points",
-		"throw": "-20 points",
+		"use": "+15 points",
+		"throw": "-15 points",
 		"image": "https://theschooldaze.com/cdn/shop/files/Grilled-Cheese-wrap__80495.jpg",
 	},
-	"grapes": {
-		"name": "Grapes",
+	"grape": {
+		"name": "Grape",
 		"rarity": "basic",
 		"use": "needs 20+ grapes to make wine; more grapes = more potent wine",
 		"throw": "-2 points",
 		"image": "https://static.wikia.nocookie.net/fruit/images/a/a1/Download_%286%29.jpg/revision/latest",
-		"multiplier": randomizer(3, 8),
+		"multiplier": randRangeFn(3, 8),
 	},
 	
 	// rarity: uncommon
@@ -92,8 +95,8 @@ const items = {
 		"properties": ["confiscatable"],
 		"image": "https://img.freepik.com/premium-vector/bottle-spirit-drink-stemware-no-alcohol-allowed-sign-no-drinking-sign-prohibiting-alcohol-beverages-ban-wine-drink-prohibition-sign-icon-illustration-no-binge-icon-stop-alcohol_91248-1073.jpg",
 	},
-	"bullying": {
-		"name": "Bullying",
+	"bullyingPower": {
+		"name": "Bullying Power",
 		"rarity": "epic",
 		"use": null,
 		"throw": "if 3 people use this towards one target, that target's full inventory and lunch money is stolen and distributed to bullies",
@@ -117,6 +120,7 @@ for (let key of Object.keys(items)) {
  * curse of confiscation
  */
 
+// these are displayed in /grubwars-help
 const helpGuides = {
 	// general help guide
 	"general":
@@ -157,6 +161,7 @@ const easyHelpNames = {
 	"useThrow": "Using and throwing items",
 };
 
+// add all items to the help guides
 Object.entries(items).forEach(([key, item]) => {
 	// create help info	
 	let propertiesInfo = "";
@@ -178,14 +183,78 @@ Object.entries(items).forEach(([key, item]) => {
 	easyHelpNames[key] = "Item: " + item.name;
 });
 
-function randomizer (min, max) {
+function randRange (min, max) {
+	return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function randRangeFn (min, max) {
 	return function () {
-		return Math.floor(Math.random() * (max - min + 1)) + min;
+		return randRange(min, max);
 	};
 }
+
+const normalPrizes = {
+	// rarity: basic
+	"lowFatMilk": 18,
+	"apple": 17,
+	"chocolateMilk": 16,
+	"grilledCheeseSandwich": 15,
+	"grape": 14,
+	
+	// rarity: uncommon
+	"peach": 13,
+	"pizzaSlice": 11,
+	"spork": 12,
+	
+	// rarity: rare
+	"lemonDrizzleCake": 8,
+	"trashGrabber": 8,
+	"pizzaBox": 6,
+	
+	// rarity: epic
+	"wine": 0, // can only be bought
+	"bullyingPower": 4,
+};
+
+const weightings = {
+	normalPrizes,
+};
+
+function pickRandomWeighted (weights) {
+	let total = Object.values(weights).reduce(function (accumulator, current) {
+		return accumulator + current;
+	});
+	let keys = Object.keys(weights);
+	let random = Math.random();
+	let pickCeiling = 0;
+	for (let i = 0; i < keys.length; i++) {
+		pickCeiling += (weights[keys[i]] / total);
+		if (random < pickCeiling) return keys[i];
+	}
+}
+function weightsToPercents (weights) { // developer visualization purposes, not actually used
+	let percents = {};
+	let cleanOutput = [];
+	let total = Object.values(weights).reduce(function (accumulator, current) {
+		return accumulator + current;
+	});
+	let keys = Object.keys(weights);
+	for (let i = 0; i < keys.length; i++) {
+		percents[keys[i]] = ("" + ((weights[keys[i]] / total) * 100).toFixed(3) + "%");
+		let itemName = items[keys[i]].name;
+		cleanOutput.push(itemName + new Array(3 - Math.floor(itemName.length / 8)).fill("\t").join("") + ((weights[keys[i]] / total) * 100).toFixed(3).padStart(6, "0") + "%");
+	}
+	return [percents, cleanOutput.join("\n")];
+}
+
+// console.log(weightsToPercents(normalPrizes)[1]);
 
 export {
 	items,
 	helpGuides,
 	easyHelpNames,
+	grubwarsEventChannelId,
+	pickRandomWeighted,
+	weightings,
+	randRange,
 };

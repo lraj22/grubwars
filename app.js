@@ -9,7 +9,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import getBlock from "./blocks.js";
 import { getTeamOf, getUserAt } from "./helper.js";
-import { helpGuides, items } from "./grubwars-data.js";
+import { grubwarsEventChannelId, helpGuides, items, pickRandomWeighted, randRange, weightings } from "./grubwars-data.js";
 
 const dataFilePath = join(import.meta.dirname, "data/grubwars.json");
 let grubwars = JSON.parse(readFileSync(dataFilePath, "utf8"));
@@ -29,19 +29,134 @@ app.command("/grubwars-join", async (interaction) => {
 		return;
 	}
 	
-	function memberCount (team) {
-		let count = grubwars.teams[team].length;
-		return (count === 1) ? "1 member" : `${count} members`;
-	}
-	
 	// allow them to join
 	await interaction.respond({
 		"response_type": "ephemeral",
 		"blocks": getBlock("joinTeam", {
-			"hg-count": memberCount("hackgrub"),
-			"sc-count": memberCount("snackclub"),
+			"hg-count": count(grubwars.teams["hackgrub"].length, "member"),
+			"sc-count": count(grubwars.teams["snackclub"].length, "member"),
 		}),
 		"delete_original": true,
+	});
+});
+
+function count (quantity, itemName) {
+	let pluralizer = itemName.match(/[hx]$/) ? "es" : "s"; // if ends in h (sandwich, peach) or x (box), use 'es'
+	return quantity + " " + itemName + ((quantity === 1) ? "" : pluralizer);
+}
+
+function isSameUtcDay (time1, time2) {
+	time1 = new Date(time1);
+	time2 = new Date(time2);
+	return ((time1.getUTCFullYear() === time2.getUTCFullYear()) && (time1.getUTCMonth() === time2.getUTCMonth()) && (time1.getUTCDate() === time2.getUTCDate()));
+}
+
+function commaListify (list) {
+	let lastIndex = list.length - 1;
+	if (list.length > 1) list[lastIndex] = "and " + list[lastIndex];
+	return ((list.length > 2) ? list.join(", ") : list.join(" "));
+}
+
+function timeDiffToString (time1, time2) {
+	let diff = Math.round(Math.abs(new Date(time1) - new Date(time2)) / 1000);
+	let hours = 0, minutes = 0, seconds = 0;
+	if (diff >= 3600) {
+		hours = Math.floor(diff / 3600);
+		diff %= 3600;
+	}
+	if (diff >= 60) {
+		minutes = Math.floor(diff / 60);
+		diff %= 60;
+	}
+	seconds = diff;
+	
+	let parts = [];
+	if (hours) parts.push(`${hours} hour${(hours > 1) ? "s" : ""}`);
+	if (minutes) parts.push(`${minutes} minute${(minutes > 1) ? "s" : ""}`);
+	if (seconds) parts.push(`${seconds} second${(seconds > 1) ? "s" : ""}`);
+	return commaListify(parts);
+}
+
+app.command("/grubwars-claim", async (interaction) => {
+	// acknowledge & log
+	await interaction.ack();
+	await logInteraction(interaction);
+	let intRef = await userRef(interaction);
+	let playerId = interaction.body.user_id;
+	
+	// ensure they are registered
+	let currentTeam = getTeamOf(playerId);
+	if (!currentTeam) {
+		log(`❌ ${intRef} tried to claim items but is not registered.`);
+		await interaction.respond({
+			"response_type": "ephemeral",
+			"text": "You are not registered for GrubWars Summer 2025! Please join a team first using `/grubwars-join`.",
+		});
+		return;
+	}
+	
+	// ensure that they CAN claim right now
+	let lastClaimed = new Date(grubwars.players[playerId].lastClaimed);
+	let lastClaimedGWC = new Date(grubwars.players[playerId].lastClaimedGWC);
+	let now = new Date();
+	let minBoost = 0;
+	if(process.env.GRUBWARS_IGNORE_LASTCLAIMED_LIMITATIONS === "true");else
+	if (interaction.body.channel_id === grubwarsEventChannelId) {
+		if (isSameUtcDay(lastClaimedGWC, now)) { // can't claim on same utc day
+			log(`❌ ${intRef} tried to claim items in GWC but it's the same day. lcgwc: ${lastClaimedGWC.toISOString()}, now: ${now.toISOString()}.`);
+			let nextClaimTime = new Date(now);
+			nextClaimTime.setUTCDate(nextClaimTime.getUTCDate() + 1); // next day
+			nextClaimTime.setUTCHours(0, 0, 0, 0);
+			await interaction.respond({
+				"response_type": "ephemeral",
+				"text": `It's the same UTC day, please wait for ${timeDiffToString(nextClaimTime, now)}`,
+			});
+			return;
+		}
+		grubwars.players[playerId].lastClaimedGWC = +now;
+		minBoost = 1;
+	} else {
+		if ((now - lastClaimed) < 5 * 60e6) { // must wait 5 hours
+			log(`❌ ${intRef} tried to claim items but it's too soon. lc: ${lastClaimed.toISOString()}, now: ${now.toISOString()}.`);
+			let nextClaimTime = new Date(now);
+			nextClaimTime.setHours(nextClaimTime.getHours() + 5);
+			await interaction.respond({
+				"response_type": "ephemeral",
+				"text": `You can only claim items once every 5 hours. Please wait for ${timeDiffToString(nextClaimTime, now)}`,
+			});
+			return;
+		}
+		grubwars.players[playerId].lastClaimed = +now;
+	}
+	
+	let numberOfItems = randRange(2 + minBoost, 6);
+	let prizes = new Array(numberOfItems).fill(null).map(_ => pickRandomWeighted(weightings.normalPrizes)); // collect ${numberOfItems} random prizes
+	let gain = {}; // describes exactly what player gained (i.e. combines 1 apple & 1 apple into 2 apples)
+	prizes.forEach(prize => {
+		// calculate how much of it to earn
+		let amount = 1;
+		if ("multiplier" in items[prize]) amount = items[prize].multiplier();
+		
+		// add it to inventory
+		if (!(prize in grubwars.players[playerId].inventory)) grubwars.players[playerId].inventory[prize] = 0;
+		grubwars.players[playerId].inventory[prize] += amount;
+		
+		// add it to gains
+		if (!(prize in gain)) gain[prize] = 0;
+		gain[prize] += amount;
+	});
+	
+	// you earned 2 apples, 1 trash grabber, 1 milk carton, and 1 peach
+	let gainedItemsList = commaListify(Object.entries(gain).map(([itemName, quantity]) => count(quantity, items[itemName].name.toLowerCase())));
+	
+	// total of 57 items
+	let totalItemsCount = Object.values(grubwars.players[playerId].inventory).reduce((acc, cur) => acc + cur, 0);
+	
+	saveState(grubwars);
+	
+	await interaction.respond({
+		"response_type": "in_channel",
+		"text": `Lunch has been served! You just got ${gainedItemsList}. You have ${count(totalItemsCount, "item")} in your inventory now.`,
 	});
 });
 
@@ -67,12 +182,14 @@ app.command("/grubwars-stats", async (interaction) => {
 		});
 	}
 	
+	let targetPlayer = grubwars.players[targetId];
+	
 	let data = {
-		"user": grubwars.players[targetId].preferredName,
-		"inventory": Object.keys(grubwars.players[targetId].inventory).length ? Object.keys(grubwars.players[targetId].inventory).join(", ") : "None",
+		"user": targetPlayer.preferredName,
+		"inventory": (Object.keys(targetPlayer.inventory).length ? commaListify(Object.entries(targetPlayer.inventory).map(([itemName, quantity]) => count(quantity, items[itemName].name.toLowerCase()))) : "None") + "\n\u200B\n",
 		"team": getTeamOf(targetId, true) || "None",
-		"score": grubwars.players[targetId].score || 0,
-		"effects": Object.keys(grubwars.players[targetId].effects).length ? Object.keys(grubwars.players[targetId].effects).join(", ") : "None",
+		"score": targetPlayer.score || 0,
+		"effects": Object.keys(targetPlayer.effects).length ? Object.keys(targetPlayer.effects).join(", ") : "None",
 	};
 	
 	await interaction.respond({
@@ -182,6 +299,8 @@ app.action(/^join-(hackgrub|snackclub)$/, async (interaction) => {
 		"lunchMoney": 0,
 		"inventory": {},
 		"effects": {},
+		"lastClaimed": 0,
+		"lastClaimedGWC": 0,
 	};
 	saveState(grubwars);
 	
