@@ -9,6 +9,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import getBlock from "./blocks.js";
 import { getTeamOf, getUserAt } from "./helper.js";
+import { helpGuides, items } from "./grubwars-data.js";
 
 const dataFilePath = join(import.meta.dirname, "data/grubwars.json");
 let grubwars = JSON.parse(readFileSync(dataFilePath, "utf8"));
@@ -106,6 +107,54 @@ app.command("/grubwars-dev", async (interaction) => {
 	saveState(grubwars);
 });
 
+app.command("/grubwars-help", async (interaction) => {
+	// acknowledge & log
+	await interaction.ack();
+	await logInteraction(interaction);
+	
+	let helpBlock = getBlock("help", {
+		"help-data": helpGuides.general, // no help data until they select an option
+	});
+	
+	await interaction.respond({
+		"response_type": "ephemeral",
+		"blocks": helpBlock,
+		"replace_original": true,
+	});
+});
+
+app.action("help-selected", async (interaction) => {
+	// acknowledge & log
+	await interaction.ack();
+	// await logInteraction(interaction); // no need, we log it in more detail
+	let intRef = await userRef(interaction);
+	
+	let helpItem = interaction.action.selected_option.value;
+	log(`${intRef} selected help item: ${helpItem}`);
+	let helpBlock = getBlock("help", {
+		"help-data": helpGuides[helpItem] || "No help data available for this item. This is a bug, please report it to <@U08QZ5TQFMF>!",
+	});
+	
+	// only add image if exists (for example "General" has no image)
+	if ((helpItem in items) && items[helpItem].image) {
+		helpBlock.push({
+			"type": "image",
+			"title": {
+				"type": "plain_text",
+				"text": items[helpItem].name,
+				"emoji": true
+			},
+			"image_url": items[helpItem].image,
+			"alt_text": items[helpItem].name,
+		});
+	}
+	
+	await interaction.respond({
+		"response_type": "ephemeral",
+		"blocks": helpBlock,
+	});
+});
+
 app.action(/^join-(hackgrub|snackclub)$/, async (interaction) => {
 	// acknowledge & log
 	await interaction.ack();
@@ -130,6 +179,7 @@ app.action(/^join-(hackgrub|snackclub)$/, async (interaction) => {
 	grubwars.players[id] = {
 		"preferredName": username,
 		"score": 0,
+		"lunchMoney": 0,
 		"inventory": {},
 		"effects": {},
 	};

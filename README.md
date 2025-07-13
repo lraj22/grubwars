@@ -52,7 +52,7 @@ Grilled Cheese Sandwich: +/- 20 pts <br>
 ### Uncommon
 
 Peach: (use) +15 pts (throw) -10 pts, 10% chance of "giant peach" (+3 peaches & double damage) <br>
-Pizza: (use) full team +5 pts (throw) target's full team -3 pts <br>
+Pizza: (use) full team +4 pts (throw) target's full team -3 pts <br>
 
 ### Rare
 
@@ -75,7 +75,7 @@ Boon of Immunity: (use/throw) target is immune to **all** effects for 30 minutes
 Curse of Isolation: (use/throw) target cannot share or cooperate with anyone for 12 hours. This includes giving items, combination attacks like Bully, etc. This can be countered with a Boon of Immunity! <br>
 Boon of Giving: (use/throw) full team has +10% point bonus for 45 minutes <br>
 Curse of Confiscation:
-- (use) **everyone** is searched (including your own team), items have 60% chance of being confiscated <br>
+- (use) **everyone** is searched (including your own team), items have 40% chance of being confiscated <br>
 - (throw) target is searched, items have 70% chance of being confiscated <br>
 
 ### School Staff

@@ -1,5 +1,6 @@
-# grubwars specific
+# 'data' contains grubwars data (use /grubwars-stats or /grubwars-leaderboard to see this)
 data
+# 'backups' contains backups of grubwars data for restoration
 backups
 
 # general

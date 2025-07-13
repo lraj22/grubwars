@@ -1,3 +1,5 @@
+import { easyHelpNames, items } from "./grubwars-data.js";
+
 const blocks = {};
 
 blocks.joinTeam = JSON.stringify([
@@ -67,6 +69,60 @@ blocks.stats = JSON.stringify([
 				"text": "*Effects*\n{effects}"
 			}
 		]
+	}
+]);
+
+const helpOptions = Object.entries(easyHelpNames).map(([key, easyName]) => {
+	return {
+		"text": {
+			"type": "plain_text",
+			"text": easyName,
+			"emoji": true,
+		},
+		"value": key,
+	};
+});
+
+blocks.help = JSON.stringify([
+	{
+		"type": "header",
+		"text": {
+			"type": "plain_text",
+			"text": "GrubWars Help",
+			"emoji": true
+		}
+	},
+	{
+		"type": "section",
+		"text": {
+			"type": "plain_text",
+			"text": "It can get confusing! We're here to help. Select any topic and learn more about it!",
+			"emoji": true
+		}
+	},
+	{
+		"type": "section",
+		"text": {
+			"type": "mrkdwn",
+			"text": "Pick an item from the dropdown list"
+		},
+		"accessory": {
+			"type": "static_select",
+			"placeholder": {
+				"type": "plain_text",
+				"text": "Select an item",
+				"emoji": true
+			},
+			"options": helpOptions,
+			"action_id": "help-selected"
+		}
+	},
+	{
+		"type": "section",
+		"text": {
+			"type": "mrkdwn",
+			"text": "{help-data}"
+		}
 	}
 ]);
 
