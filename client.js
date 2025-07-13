@@ -10,9 +10,7 @@ const app = new App({
 	"signingSecret": process.env.GRUBWARS_SIGNING_SECRET,
 	"socketMode": isSocketMode,
 	"appToken": process.env.GRUBWARS_APP_TOKEN,
-	"endpoints": {
-		"events": "/slack/grubwars/events",
-	},
+	"endpoints": "/slack/grubwars/events",
 });
 
 log(isSocketMode ? "Starting in Socket Mode!" : "Starting in Request URL Mode!");
