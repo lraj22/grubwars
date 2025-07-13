@@ -146,6 +146,8 @@ The more you claim prizes, the more you will have, and the more you can use/thro
 
 To use or throw an item, run \`/grubwars-use\` and select the item you want to use/throw. If you have multiple of the same item, you can select how many you want to use/throw. Using an item has no target, it's just yourself using it. If you throw an item, you must select a target, which can be yourself, a teammate, or an opponent. The target will receive the negative effect of the item.
 
+Using an item has a 100% success rate, while throwing has a 90% success rate. Some items affect the success rates of throws, so make sure you are aware of how likely you are to succeed!
+
 You can throw items at ANYONE, including yourself and your teammates. Be careful!`,
 };
 
