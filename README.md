@@ -1,6 +1,6 @@
 # GrubWars
 
-Welcome to GrubWars, a team-vs-team game where a tactical food fight ensues in the Hack Club Slack! Run `/grubwars-join` to join the game and read on for 
+Welcome to GrubWars, a team-vs-team game where a tactical food fight ensues in the Hack Club Slack! Run `/grubwars-join` to join the game and `/grubwars-help` for more information. Or, just read on.
 
 ## Teams
 
@@ -8,8 +8,11 @@ Team Hack Grub vs Team Snack Club
 
 ## Commands
 
+`/grubwars-help` <br>
+Get help on everything GrubWars! You can also always ping me (Lakshya)
+
 `/grubwars-join` <br>
-Used to **join** either of the teams (ping Lakshya to switch teams)
+Used to **join** either of the teams (ping me to switch teams)
 
 `/grubwars-claim` <br>
 Claim the gift in this channel
@@ -28,6 +31,9 @@ Check the stats for a user
 
 `/grubwars-leaderboard` <br>
 See the current leaderboard!
+
+`/grubwars-dev` <br>
+Command just for developers 😊 do not use this >:]
 
 ## Information
 
