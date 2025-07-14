@@ -247,8 +247,6 @@ function weightsToPercents (weights) { // developer visualization purposes, not 
 	return [percents, cleanOutput.join("\n")];
 }
 
-// console.log(weightsToPercents(normalPrizes)[1]);
-
 export {
 	items,
 	helpGuides,

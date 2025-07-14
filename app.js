@@ -8,8 +8,16 @@ import {
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import getBlock from "./blocks.js";
-import { getTeamOf, getUserAt } from "./helper.js";
-import { grubwarsEventChannelId, helpGuides, items, pickRandomWeighted, randRange, weightings } from "./grubwars-data.js";
+import { count, getTeamOf, getUserAt } from "./helper.js";
+import {
+	grubwarsEventChannelId,
+	helpGuides,
+	items,
+	pickRandomWeighted,
+	randRange,
+	weightings
+} from "./grubwars-data.js";
+import { throwItem, useItem } from "./grubwars.js";
 
 const dataFilePath = join(import.meta.dirname, "data/grubwars.json");
 let grubwars = JSON.parse(readFileSync(dataFilePath, "utf8"));
@@ -39,11 +47,6 @@ app.command("/grubwars-join", async (interaction) => {
 		"delete_original": true,
 	});
 });
-
-function count (quantity, itemName) {
-	let pluralizer = itemName.match(/[hx]$/) ? "es" : "s"; // if ends in h (sandwich, peach) or x (box), use 'es'
-	return quantity + " " + itemName + ((quantity === 1) ? "" : pluralizer);
-}
 
 function isSameUtcDay (time1, time2) {
 	time1 = new Date(time1);
@@ -156,7 +159,49 @@ app.command("/grubwars-claim", async (interaction) => {
 	
 	await interaction.respond({
 		"response_type": "in_channel",
-		"text": `Lunch has been served! You just got ${gainedItemsList}. You have ${count(totalItemsCount, "item")} in your inventory now.`,
+		"text": `Lunch has been served! <@${playerId}> just got ${gainedItemsList}. You have ${count(totalItemsCount, "item")} in your inventory now.`,
+	});
+});
+
+app.command(/^\/grubwars-(use|throw)$/, async (interaction) => {
+	// acknowledge & log
+	await interaction.ack();
+	await logInteraction(interaction);
+	let intRef = await userRef(interaction);
+	let playerId = interaction.body.user_id;
+	let method = interaction.command.command.split("-")[1];
+	
+	// ensure they are registered
+	let currentTeam = getTeamOf(playerId);
+	if (!currentTeam) {
+		log(`❌ ${intRef} tried to claim items but is not registered.`);
+		await interaction.respond({
+			"response_type": "ephemeral",
+			"text": "You are not registered for GrubWars Summer 2025! Please join a team first using `/grubwars-join`.",
+		});
+		return;
+	}
+	
+	let inventory = Object.entries(grubwars.players[playerId].inventory)
+		.filter(([_, quantity]) =>  quantity > 0)
+		.map(([itemName, quantity]) => {
+			return {
+				"text": {
+					"type": "plain_text",
+					"text": items[itemName].name + ` (${quantity})`,
+					"emoji": false,
+				},
+				"value": itemName,
+			};
+		});
+	
+	await interaction.respond({
+		"response_type": "ephemeral",
+		"blocks": getBlock("useThrow", {
+			"method": method,
+			"methodUpper": method[0].toUpperCase() + method.slice(1),
+			"inventory": inventory,
+		}),
 	});
 });
 
@@ -186,7 +231,7 @@ app.command("/grubwars-stats", async (interaction) => {
 	
 	let data = {
 		"user": targetPlayer.preferredName,
-		"inventory": (Object.keys(targetPlayer.inventory).length ? commaListify(Object.entries(targetPlayer.inventory).map(([itemName, quantity]) => count(quantity, items[itemName].name.toLowerCase()))) : "None") + "\n\u200B\n",
+		"inventory": (Object.keys(targetPlayer.inventory).length ? commaListify(Object.entries(targetPlayer.inventory).map(([itemName, quantity]) => count(quantity, items[itemName].name.toLowerCase()))) : "None"),
 		"team": getTeamOf(targetId, true) || "None",
 		"score": targetPlayer.score || 0,
 		"effects": Object.keys(targetPlayer.effects).length ? Object.keys(targetPlayer.effects).join(", ") : "None",
@@ -238,6 +283,60 @@ app.command("/grubwars-help", async (interaction) => {
 		"blocks": helpBlock,
 		"replace_original": true,
 	});
+});
+
+function getValues (interaction) {
+	// slack block kit will be the end of me
+	// this code will NOT be explained because it is complicated, though not unnecessarily complicated
+	// just complicated enough to accomodate slack block kit
+	
+	return Object.fromEntries(Object.values(interaction.body.state.values).map(inputInfo => {
+		let [key, input] = Object.entries(inputInfo)[0];
+		key = key.split("-");
+		key = key[key.length - 1];
+		let inputValue = ("selected_option" in input) ? input.selected_option.value : (input.value || input.selected_user);
+		return [key, inputValue];
+	}))
+}
+
+app.action("confirm-ut", async (interaction) => {
+	// acknowledge & log
+	await interaction.ack();
+	// await logInteraction(interaction); // no need, we log it in more detail
+	let intRef = await userRef(interaction);
+	let playerId = interaction.body.user.id;
+	let player = grubwars.players[playerId];
+	
+	let { method, item, quantity, target: targetId } = getValues(interaction);
+	let availableQuantity = player.inventory[item] || 0;
+	let easyName = items[item].name;
+	
+	function msg (message) {
+		return {
+			"message_type": "ephemeral",
+			"text": message,
+		};
+	}
+	
+	if (availableQuantity < quantity) {
+		return await interaction.respond(msg(`You don't have ${count(quantity, easyName)}, only ${availableQuantity}.`));
+	}
+	
+	// TODO: make sure item can be used/thrown!
+	
+	if ((method === "throw") && (!targetId)) {
+		return await interaction.respond(msg(`You must specify a target when you throw an item.`));
+	}
+	
+	// time to process the item!
+	let response = "";
+	
+	if ((method === "use") && (targetId)) response += "By the way, the target you selected has been ignored since you are *using* this item instead of *throwing* it.\n";
+	
+	if (method === "use") response += await useItem({ playerId, item, quantity });
+	if (method === "throw") response += await throwItem({ playerId, item, quantity, targetId });
+	
+	return await interaction.respond(msg(response));
 });
 
 app.action("help-selected", async (interaction) => {
@@ -310,4 +409,9 @@ app.action(/^join-(hackgrub|snackclub)$/, async (interaction) => {
 		"response_type": "ephemeral",
 		"text": `Welcome, ${username}! You have joined Team ${team}!`,
 	});
+});
+
+// they selected something in the use/throw interface - no relevance to us until cancel/confirm
+app.action(/^ut-.+$/, async (interaction) => {
+	await interaction.ack();
 });

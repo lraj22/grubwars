@@ -126,6 +126,142 @@ blocks.help = JSON.stringify([
 	}
 ]);
 
+blocks.useThrow = JSON.stringify([
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "Time to plan something! Use/throw items in your inventory. Using/throwing more than one item at a time is equivalent to repeating the action multiple times unless otherwise specified."
+			}
+		},
+		{
+			"type": "divider"
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "*Use or throw?*"
+			},
+			"accessory": {
+				"type": "static_select",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Required",
+					"emoji": true
+				},
+				"options": [
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "Use!",
+							"emoji": true
+						},
+						"value": "use"
+					},
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "Throw!",
+							"emoji": true
+						},
+						"value": "throw"
+					}
+				],
+				"initial_option": {
+					"text": {
+						"type": "plain_text",
+						"text": "{methodUpper}!",
+						"emoji": true
+					},
+					"value": "{method}"
+				},
+				"action_id": "ut-select-method"
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "*Which item?*"
+			},
+			"accessory": {
+				"type": "static_select",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Select an item (required)",
+					"emoji": true
+				},
+				"options": "r:inventory",
+				"action_id": "ut-select-item"
+			}
+		},
+		{
+			"type": "input",
+			"element": {
+				"type": "plain_text_input",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Default: one (1)",
+					"emoji": true
+				},
+				"action_id": "ut-select-quantity"
+			},
+			"label": {
+				"type": "plain_text",
+				"text": "How many?",
+				"emoji": true
+			}
+		},
+		{
+			"type": "divider"
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "*Select your target* (only for throws)"
+			},
+			"accessory": {
+				"type": "users_select",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Default: yourself",
+					"emoji": true
+				},
+				"action_id": "ut-select-target"
+			}
+		},
+		{
+			"type": "divider"
+		},
+		{
+			"type": "actions",
+			"elements": [
+				{
+					"type": "button",
+					"text": {
+						"type": "plain_text",
+						"text": ":x: Cancel",
+						"emoji": true
+					},
+					"value": "cancel",
+					"action_id": "cancel-ut"
+				},
+				{
+					"type": "button",
+					"text": {
+						"type": "plain_text",
+						"text": ":white_check_mark: Go!",
+						"emoji": true
+					},
+					"value": "confirm",
+					"action_id": "confirm-ut"
+				}
+			]
+		}
+	]);
+
 function getBlock (blockName, data) {
 	let block = blocks[blockName];
 	if (!block) return {};
@@ -133,6 +269,11 @@ function getBlock (blockName, data) {
 	
 	return JSON.parse(block, (_, value) => {
 		if (typeof value === "string") {
+			if (value.startsWith("r:")) {
+				let k = value.slice(2);
+				value = ((k in data) ? data[k] : value);
+				if (typeof value !== "string") return value;
+			}
 			return value.replace(/{(.+?)}/g, (_, k) => (
 				(typeof data[k] === "undefined") ? `{${k}}` : data[k]
 			));
