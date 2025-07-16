@@ -1,5 +1,6 @@
 import app from "./client.js";
 import {
+	getGrubwars,
 	log,
 	logInteraction,
 	saveState,
@@ -202,6 +203,7 @@ app.command(/^\/grubwars-(use|throw)$/, async (interaction) => {
 			"methodUpper": method[0].toUpperCase() + method.slice(1),
 			"inventory": inventory,
 		}),
+		"delete_original": true,
 	});
 });
 
@@ -210,6 +212,7 @@ app.command("/grubwars-stats", async (interaction) => {
 	await interaction.ack();
 	await logInteraction(interaction);
 	let intRef = await userRef(interaction);
+	grubwars = getGrubwars();
 	
 	// determine requested user
 	let [targetId, targetName] = getUserAt(interaction.command.text);
@@ -294,7 +297,7 @@ function getValues (interaction) {
 		let [key, input] = Object.entries(inputInfo)[0];
 		key = key.split("-");
 		key = key[key.length - 1];
-		let inputValue = ("selected_option" in input) ? input.selected_option.value : (input.value || input.selected_user);
+		let inputValue = ("selected_option" in input) ? input.selected_option?.value : (input.value || input.selected_user);
 		return [key, inputValue];
 	}))
 }
@@ -307,36 +310,68 @@ app.action("confirm-ut", async (interaction) => {
 	let playerId = interaction.body.user.id;
 	let player = grubwars.players[playerId];
 	
+	async function ephMessage (message) {
+		return await interaction.client.chat.postEphemeral({
+			"channel": interaction.body.channel.id,
+			"user": playerId,
+			"text": response,
+			"blocks": getBlock("closableText", {
+				"text": message,
+			}),
+		});
+	}
+	
 	let { method, item, quantity, target: targetId } = getValues(interaction);
+	
+	// make sure quantity is valid
+	quantity = ((typeof quantity === "string") ? quantity : "1");
+	quantity = parseInt(quantity);
+	if (isNaN(quantity)) {
+		return await ephMessage("The quantity must be an integer (1, 2, ..., max) or blank (1).");
+	}
+	
+	// make sure item is valid
+	if (typeof item !== "string") {
+		return await ephMessage("Please select an item.");
+	}
+	
 	let availableQuantity = player.inventory[item] || 0;
 	let easyName = items[item].name;
 	
-	function msg (message) {
-		return {
-			"message_type": "ephemeral",
-			"text": message,
-		};
-	}
-	
 	if (availableQuantity < quantity) {
-		return await interaction.respond(msg(`You don't have ${count(quantity, easyName)}, only ${availableQuantity}.`));
+		return await ephMessage(`You don't have ${count(quantity, easyName)}, only ${availableQuantity}.`);
 	}
 	
 	// TODO: make sure item can be used/thrown!
 	
 	if ((method === "throw") && (!targetId)) {
-		return await interaction.respond(msg(`You must specify a target when you throw an item.`));
+		return await ephMessage(`You must specify a target when you throw an item.`);
 	}
 	
 	// time to process the item!
-	let response = "";
+	let response = `<@${playerId}> `;
+	let isSuccess = true;
 	
 	if ((method === "use") && (targetId)) response += "By the way, the target you selected has been ignored since you are *using* this item instead of *throwing* it.\n";
 	
-	if (method === "use") response += await useItem({ playerId, item, quantity });
-	if (method === "throw") response += await throwItem({ playerId, item, quantity, targetId });
+	let actionResponse = "";
+	if (method === "use") [isSuccess, actionResponse] = await useItem({ playerId, item, quantity });
+	if (method === "throw") [isSuccess, actionResponse] = await throwItem({ playerId, item, quantity, targetId });
+	response += actionResponse;
 	
-	return await interaction.respond(msg(response));
+	// remove interface if successful
+	if (isSuccess) {
+		// remove original interface, operation success
+		await interaction.respond({ "delete_original": true });
+		// post message
+		return await interaction.client.chat.postMessage({
+			"channel": interaction.body.channel.id,
+			"text": response,
+		});
+	} else {
+		// don't delete original, just post a closable ephemeral message
+		return await ephMessage(response);
+	}
 });
 
 app.action("help-selected", async (interaction) => {
@@ -415,3 +450,11 @@ app.action(/^join-(hackgrub|snackclub)$/, async (interaction) => {
 app.action(/^ut-.+$/, async (interaction) => {
 	await interaction.ack();
 });
+
+// a closable text prompt has requested to close itself. so be it!
+app.action("close-self", async (interaction) => {
+	await interaction.ack();
+	await interaction.respond({
+		"delete_original": true,
+	});
+})

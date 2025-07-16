@@ -1,6 +1,6 @@
 import { getGrubwars, saveState } from "./datahandler.js";
 import { items } from "./grubwars-data.js";
-import { count } from "./helper.js";
+import { count, getTeamOf } from "./helper.js";
 
 let grubwars = {};
 
@@ -32,81 +32,101 @@ async function useItem ({ playerId, item, quantity }) {
 	let response = "";
 	let oldScore = grubwars.players[playerId].score;
 	let easyName = items[item].name;
-	
-	changeQuantity(playerId, item, -quantity);
+	let isSuccess = true;
 	
 	switch (item) {
 		// rarity: basic
 		case "lowFatMilk":
+			changeQuantity(playerId, item, -quantity);
 			changeScore(playerId, 5 * quantity);
 			response += `You used ${count(quantity, easyName)} and gained ${count(scoreDiff(playerId, oldScore), "point")}!`;
 			break;
 			
 		case "apple":
+			changeQuantity(playerId, item, -quantity);
 			changeScore(playerId, 8 * quantity);
 			response += `You used ${count(quantity, easyName)} and gained ${count(scoreDiff(playerId, oldScore), "point")}!`;
 			break;
 			
 		case "chocolateMilk":
+			changeQuantity(playerId, item, -quantity);
 			changeScore(playerId, 12 * quantity);
 			response += `You used ${count(quantity, easyName)} and gained ${count(scoreDiff(playerId, oldScore), "point")}!`;
 			break;
 			
 		case "grilledCheeseSandwich":
+			changeQuantity(playerId, item, -quantity);
 			changeScore(playerId, 15 * quantity);
 			response += `You used ${count(quantity, easyName)} and gained ${count(scoreDiff(playerId, oldScore), "point")}!`;
 			break;
 			
 		case "grape":
+			if (quantity < 20) {
+				response += "Error: You must use _at least_ 20 grapes at once to make wine.";
+				isSuccess = false;
+				break;
+			}
 			response += "This item is not yet supported. :[";
+			isSuccess = false;
 			break;
 			
 
 		// rarity: uncommon
 		case "peach":
+			changeQuantity(playerId, item, -quantity);
 			changeScore(playerId, 15 * quantity);
 			response += `You used ${count(quantity, easyName)} and gained ${count(scoreDiff(playerId, oldScore), "point")}!`;
 			break;
 			
 		case "pizzaSlice":
-			response += "This item is not yet supported. :[";
+			changeQuantity(playerId, item, -quantity);
+			let team = getTeamOf(playerId);
+			grubwars.teams[team].forEach(memberId => changeScore(memberId, 4 * quantity));
+			response += `WOAH! Every member on your team gained ${4 * quantity} points!`;
 			break;
 			
 		case "spork":
 			response += "This item is not yet supported. :[";
+			isSuccess = false;
 			break;
 			
 
 		// rarity: rare
 		case "lemonDrizzleCake":
 			response += "This item is not yet supported. :[";
+			isSuccess = false;
 			break;
 			
 		case "trashGrabber":
 			response += "This item is not yet supported. :[";
+			isSuccess = false;
 			break;
 			
 		case "pizzaBox":
 			response += "This item is not yet supported. :[";
+			isSuccess = false;
 			break;
 			
 
 		// rarity: epic
 		case "wine":
 			response += "This item is not yet supported. :[";
+			isSuccess = false;
 			break;
 			
 		case "bullyingPower":
 			response += "This item is not yet supported. :[";
+			isSuccess = false;
 			break;
 			
 		default:
 			response += "Unknown item selected...";
+			isSuccess = false;
 	}
 	
 	saveState(grubwars);
 	
-	return response;
+	return [isSuccess, response];
 }
 
 async function throwItem ({ playerId, item, quantity, targetId }) {
@@ -116,6 +136,7 @@ async function throwItem ({ playerId, item, quantity, targetId }) {
 	let oldTargetScore = grubwars.players[targetId].score;
 	let easyName = items[item].name;
 	let response = "";
+	let isSuccess = true;
 	
 	changeQuantity(playerId, item, -quantity);
 	
@@ -175,36 +196,42 @@ async function throwItem ({ playerId, item, quantity, targetId }) {
 		// rarity: rare
 		case "lemonDrizzleCake":
 			response += "This item is not yet supported. :[";
+			isSuccess = false;
 			break;
 			
 		case "trashGrabber":
 			response += "This item is not yet supported. :[";
+			isSuccess = false;
 			break;
 			
 		case "pizzaBox":
 			response += "This item is not yet supported. :[";
+			isSuccess = false;
 			break;
 			
 
 		// rarity: epic
 		case "wine":
 			response += "This item is not yet supported. :[";
+			isSuccess = false;
 			break;
 			
 		case "bullyingPower":
 			response += "This item is not yet supported. :[";
+			isSuccess = false;
 			break;
 			
 		default:
 			response += "Unknown item selected...";
+			isSuccess = false;
 	}
 	
 	saveState(grubwars);
 	
-	return response;
+	return [isSuccess, response];
 }
 
 export {
 	useItem,
 	throwItem,
-}
+};
