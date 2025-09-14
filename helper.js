@@ -32,3 +32,7 @@ export function count (quantity, itemName) {
 	let pluralizer = itemName.match(/[hx]$/) ? "es" : "s"; // if ends in h (sandwich, peach) or x (box), use 'es'
 	return quantity + " " + itemName + ((quantity === 1) ? "" : pluralizer);
 }
+
+export function effectToText (effect) {
+	return effect.name;
+}

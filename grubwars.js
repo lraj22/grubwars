@@ -1,5 +1,5 @@
 import { getGrubwars, saveState } from "./datahandler.js";
-import { items } from "./grubwars-data.js";
+import { items, disasterReasons } from "./grubwars-data.js";
 import { count, getTeamOf } from "./helper.js";
 
 let grubwars = {};
@@ -131,6 +131,7 @@ async function useItem ({ playerId, item, quantity }) {
 
 async function throwItem ({ playerId, item, quantity, targetId }) {
 	grubwars = getGrubwars();
+	let player = grubwars.players[playerId];
 	let target = grubwars.players[targetId];
 	let oldScore = grubwars.players[playerId].score;
 	let oldTargetScore = grubwars.players[targetId].score;
@@ -139,6 +140,20 @@ async function throwItem ({ playerId, item, quantity, targetId }) {
 	let isSuccess = true;
 	
 	changeQuantity(playerId, item, -quantity);
+	
+	let chanceToSucceed = 0.90;
+	player.effects.forEach(function (effect) {
+		if (Date.now() > effect.expires) return;
+		if (effect.name === "spork") chanceToSucceed *= 1.05; // spork: 5% accuracy boost
+		
+		// TODO: probably want to tell the user what effects were applied im 'response'
+	});
+	
+	if (Math.random () >= chanceToSucceed) { // WHOOPS YOU JUST MISSED
+		response += `Whoops! ${disasterReasons[Math.floor(Math.random() * disasterReasons.length)]} You just lost the ${count(quantity, easyName)} you were about to throw! Oh well.... :P`;
+		saveState(grubwars);
+		return [isSuccess, response];
+	}
 	
 	switch (item) {
 		// rarity: basic

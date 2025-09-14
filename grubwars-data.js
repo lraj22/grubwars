@@ -247,6 +247,15 @@ function weightsToPercents (weights) { // developer visualization purposes, not 
 	return [percents, cleanOutput.join("\n")];
 }
 
+const disasterReasons = [
+	"You slipped on a banana peel!",
+	"The table you were standing on fell over. Hmm.",
+	"Someone accidentally hit you thinking you were someone else!",
+	"A strong breeze makes everything fall out of your hand.",
+	"Your eyes were splattered with lemon meringue pie the instant you tried to throw. It... didn't go very well.",
+	"A teacher appears in your peripheral and you instinctually run.",
+];
+
 export {
 	items,
 	helpGuides,
@@ -255,4 +264,5 @@ export {
 	pickRandomWeighted,
 	weightings,
 	randRange,
+	disasterReasons,
 };

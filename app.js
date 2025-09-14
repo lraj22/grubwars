@@ -7,7 +7,7 @@ import {
 	userRef,
 } from "./datahandler.js";
 import getBlock from "./blocks.js";
-import { count, getTeamOf, getUserAt } from "./helper.js";
+import { count, effectToText, getTeamOf, getUserAt } from "./helper.js";
 import {
 	grubwarsEventChannelId,
 	helpGuides,
@@ -234,7 +234,7 @@ app.command("/grubwars-stats", async (interaction) => {
 		"inventory": (Object.keys(targetPlayer.inventory).length ? commaListify(Object.entries(targetPlayer.inventory).map(([itemName, quantity]) => count(quantity, items[itemName].name.toLowerCase()))) : "None"),
 		"team": getTeamOf(targetId, true) || "None",
 		"score": targetPlayer.score || 0,
-		"effects": Object.keys(targetPlayer.effects).length ? Object.keys(targetPlayer.effects).join(", ") : "None",
+		"effects": targetPlayer.effects.length ? targetPlayer.effects.map(effectToText).join(", ") : "None",
 	};
 	
 	await interaction.respond({
@@ -308,6 +308,7 @@ app.action("confirm-ut", async (interaction) => {
 	let intRef = await userRef(interaction);
 	let playerId = interaction.body.user.id;
 	let player = grubwars.players[playerId];
+	let response = `<@${playerId}> `;
 	
 	async function ephMessage (message) {
 		return await interaction.client.chat.postEphemeral({
@@ -348,7 +349,6 @@ app.action("confirm-ut", async (interaction) => {
 	}
 	
 	// time to process the item!
-	let response = `<@${playerId}> `;
 	let isSuccess = true;
 	
 	if ((method === "use") && (targetId)) response += "By the way, the target you selected has been ignored since you are *using* this item instead of *throwing* it.\n";
@@ -432,7 +432,7 @@ app.action(/^join-(hackgrub|snackclub)$/, async (interaction) => {
 		"score": 0,
 		"lunchMoney": 0,
 		"inventory": {},
-		"effects": {},
+		"effects": [],
 		"lastClaimed": 0,
 		"lastClaimedGWC": 0,
 	};
@@ -452,9 +452,11 @@ app.action(/^ut-.+$/, async (interaction) => {
 });
 
 // a closable text prompt has requested to close itself. so be it!
-app.action("close-self", async (interaction) => {
+async function closeSelf (interaction) {
 	await interaction.ack();
 	await interaction.respond({
 		"delete_original": true,
 	});
-})
+}
+app.action("close-self", closeSelf);
+app.action("cancel-ut", closeSelf);
