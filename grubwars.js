@@ -185,7 +185,10 @@ async function throwItem ({ playerId, item, quantity, targetId }) {
 			break;
 			
 		case "pizzaSlice":
-			response += "This item is not yet supported. :[";
+			changeQuantity(playerId, item, -quantity);
+			let team = getTeamOf(targetId);
+			grubwars.teams[team].forEach(memberId => changeScore(memberId, -3 * quantity));
+			response += `YIKES! Every member on ${target.preferredName}'s team LOST ${3 * quantity} points!`;
 			break;
 			
 		case "spork":

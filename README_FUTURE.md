@@ -4,7 +4,7 @@ Welcome to GrubWars, a team-vs-team game where a tactical food fight ensues in t
 
 ## Teams
 
-Team **Hack Grub** vs Team **Snack Club**
+Team Hack Grub vs Team Snack Club
 
 ## Commands
 
@@ -20,21 +20,17 @@ Claim the gift in this channel
 `/grubwars-use` <br>
 Use an item you have
 
-<!--
 `/grubwars-give` <br>
 Give an item you have to someone else
 
 `/grubwars-shop` <br>
 Open the shop to buy stuff with lunch money
--->
 
 `/grubwars-stats` <br>
 Check the stats for a user
 
-<!--
 `/grubwars-leaderboard` <br>
 See the current leaderboard!
--->
 
 `/grubwars-dev` <br>
 Command just for developers 😊 do not use this >:]
@@ -44,13 +40,11 @@ Command just for developers 😊 do not use this >:]
 Default chance of successful use: 100% <br>
 Default chance of successful throw: 90%
 
-<!--
 Items that can be confiscated: Wine, Citation
 
 Notes:
 - Wine can only be made by using Grapes (the cafeteria obviously doesn't sell it, lol)
 - Curses can only be bought in the secret shop and have 100% success rate
--->
 
 ## Items
 
@@ -66,9 +60,6 @@ Grilled Cheese Sandwich: +/- 15 pts <br>
 Peach: (use) +15 pts (throw) -10 pts, 10% chance of "giant peach" (+3 peaches & double damage) <br>
 Pizza: (use) full team +4 pts (throw) target's full team -3 pts <br>
 
-More to be added.
-
-<!--
 ### Rare
 
 Lemon Drizzle Cake: (use) +20% points for next hour (throw) target has -30% points for next 12 hours <br>
@@ -105,7 +96,6 @@ Citation: (use/throw) target's attack has 10% chance of backfiring, only then do
 ### Shop
 
 ?
--->
 
 ## Questions?
 

@@ -6,8 +6,6 @@ import {
 	saveState,
 	userRef,
 } from "./datahandler.js";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import getBlock from "./blocks.js";
 import { count, getTeamOf, getUserAt } from "./helper.js";
 import {
@@ -20,13 +18,10 @@ import {
 } from "./grubwars-data.js";
 import { throwItem, useItem } from "./grubwars.js";
 
-const dataFilePath = join(import.meta.dirname, "data/grubwars.json");
-let grubwars = JSON.parse(readFileSync(dataFilePath, "utf8"));
-delete grubwars.debug; // it will be added back in saveState
-
 app.command("/grubwars-join", async (interaction) => {
 	await interaction.ack();
 	await logInteraction(interaction);
+	let grubwars = getGrubwars();
 	
 	// ensure they're not already in a team
 	let currentTeam = getTeamOf(interaction.body.user_id, true);
@@ -85,6 +80,7 @@ app.command("/grubwars-claim", async (interaction) => {
 	// acknowledge & log
 	await interaction.ack();
 	await logInteraction(interaction);
+	let grubwars = getGrubwars();
 	let intRef = await userRef(interaction);
 	let playerId = interaction.body.user_id;
 	
@@ -168,6 +164,7 @@ app.command(/^\/grubwars-(use|throw)$/, async (interaction) => {
 	// acknowledge & log
 	await interaction.ack();
 	await logInteraction(interaction);
+	let grubwars = getGrubwars();
 	let intRef = await userRef(interaction);
 	let playerId = interaction.body.user_id;
 	let method = interaction.command.command.split("-")[1];
@@ -212,7 +209,7 @@ app.command("/grubwars-stats", async (interaction) => {
 	await interaction.ack();
 	await logInteraction(interaction);
 	let intRef = await userRef(interaction);
-	grubwars = getGrubwars();
+	let grubwars = getGrubwars();
 	
 	// determine requested user
 	let [targetId, targetName] = getUserAt(interaction.command.text);
@@ -250,6 +247,7 @@ app.command("/grubwars-dev", async (interaction) => {
 	// acknowledge & log
 	await interaction.ack();
 	await logInteraction(interaction);
+	let grubwars = getGrubwars();
 	let intRef = await userRef(interaction);
 	
 	// only devs can use this command (Lakshya & Lavith Raj)
@@ -306,6 +304,7 @@ app.action("confirm-ut", async (interaction) => {
 	// acknowledge & log
 	await interaction.ack();
 	// await logInteraction(interaction); // no need, we log it in more detail
+	let grubwars = getGrubwars();
 	let intRef = await userRef(interaction);
 	let playerId = interaction.body.user.id;
 	let player = grubwars.players[playerId];
@@ -410,6 +409,7 @@ app.action(/^join-(hackgrub|snackclub)$/, async (interaction) => {
 	// acknowledge & log
 	await interaction.ack();
 	await logInteraction(interaction);
+	let grubwars = getGrubwars();
 	let intRef = await userRef(interaction);
 	
 	let { id, username } = interaction.body.user;
