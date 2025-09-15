@@ -33,6 +33,33 @@ export function count (quantity, itemName) {
 	return quantity + " " + itemName + ((quantity === 1) ? "" : pluralizer);
 }
 
-export function effectToText (effect) {
-	return effect.name;
+export function effectsToText (effects) {
+	let effectsCombined = {};
+	let now = Date.now();
+	
+	// add effects of the same name together (if currently valid)
+	effects.forEach(effect => {
+		if (now > effect.expires) return;
+		if (!(effect.name in effectsCombined)) effectsCombined[effect.name] = 0;
+		effectsCombined[effect.name] += 1;
+	});
+	
+	// combine into a list array
+	let effectsText = [];
+	Object.entries(effectsCombined).forEach(effect => {
+		let [name, quantity] = effect;
+		let parts = name.split("-");
+		let isForeign = false;
+		if (parts[1] === "thrown") isForeign = true;
+		effectsText.push(count(quantity, (isForeign ? "foreign " : "") + parts[0]));
+	});
+	
+	// add 'and' if long enough
+	let length = effectsText.length;
+	if (length > 1) {
+		effectsText[length - 2] += ", and " + effectsText[length - 1];
+		effectsText.pop();
+	}
+	
+	return effectsText.join(", ");
 }

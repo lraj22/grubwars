@@ -140,6 +140,9 @@ function saveState (data) {
 	// update 'grubwars' so hourly backup is in the know
 	grubwars = cloneObj(data);
 	
+	// TODO: prune grubwars object ("you have 0 apples" or "effect expired last week" etc.)
+	//? grubwars = pruneGrubwars(grubwars);
+	
 	// add debug info to bottom (hence delete first)
 	let saveObj = cloneObj(data);
 	delete saveObj.debug;

@@ -7,7 +7,7 @@ import {
 	userRef,
 } from "./datahandler.js";
 import getBlock from "./blocks.js";
-import { count, effectToText, getTeamOf, getUserAt } from "./helper.js";
+import { count, effectsToText, getTeamOf, getUserAt } from "./helper.js";
 import {
 	grubwarsEventChannelId,
 	helpGuides,
@@ -234,7 +234,7 @@ app.command("/grubwars-stats", async (interaction) => {
 		"inventory": (Object.keys(targetPlayer.inventory).length ? commaListify(Object.entries(targetPlayer.inventory).map(([itemName, quantity]) => count(quantity, items[itemName].name.toLowerCase()))) : "None"),
 		"team": getTeamOf(targetId, true) || "None",
 		"score": targetPlayer.score || 0,
-		"effects": targetPlayer.effects.length ? targetPlayer.effects.map(effectToText).join(", ") : "None",
+		"effects": targetPlayer.effects.length ? effectsToText(targetPlayer.effects) : "None",
 	};
 	
 	await interaction.respond({

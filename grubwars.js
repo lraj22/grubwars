@@ -1,6 +1,6 @@
 import { getGrubwars, saveState } from "./datahandler.js";
 import { items, disasterReasons } from "./grubwars-data.js";
-import { count, getTeamOf } from "./helper.js";
+import { count, effectsToText, getTeamOf } from "./helper.js";
 
 let grubwars = {};
 
@@ -33,6 +33,11 @@ async function useItem ({ playerId, item, quantity }) {
 	let oldScore = grubwars.players[playerId].score;
 	let easyName = items[item].name;
 	let isSuccess = true;
+	
+	let effectsThatDidSomething = [];
+	if (effectsThatDidSomething.length) {
+		response += `Just an FYI, your throw was affected by ${effectsToText(effectsThatDidSomething)}.\n`
+	}
 	
 	switch (item) {
 		// rarity: basic
@@ -86,8 +91,16 @@ async function useItem ({ playerId, item, quantity }) {
 			break;
 			
 		case "spork":
-			response += "This item is not yet supported. :[";
-			isSuccess = false;
+			changeQuantity(playerId, item, -quantity);
+			let expiresTime = Date.now () + 1 * 60 * 60e3; // now + 1 hour
+			let effectsToAdd = new Array(quantity).fill({
+				"name": "spork-used",
+				"expires": expiresTime,
+				"expiresReadable": new Date(expiresTime).toUTCString(),
+			});
+			grubwars.players[playerId].effects.push(...effectsToAdd);
+			let sporkCount = grubwars.players[playerId].effects.reduce((acc, cur) => acc + (cur.name.startsWith("spork") ? 1 : 0), 0); // count number of spork effects
+			response += `You are now under ${count(sporkCount, "spork effect")}.`;
 			break;
 			
 
@@ -142,12 +155,24 @@ async function throwItem ({ playerId, item, quantity, targetId }) {
 	changeQuantity(playerId, item, -quantity);
 	
 	let chanceToSucceed = 0.90;
+	let effectsThatDidSomething = [];
+	
 	player.effects.forEach(function (effect) {
-		if (Date.now() > effect.expires) return;
-		if (effect.name === "spork") chanceToSucceed *= 1.05; // spork: 5% accuracy boost
+		if (Date.now() > effect.expires) return; // if expired, ignore
 		
-		// TODO: probably want to tell the user what effects were applied im 'response'
+		if (effect.name.startsWith("spork-used")) {
+			chanceToSucceed *= 1.05; // self spork: 5% accuracy boost
+			effectsThatDidSomething.push(effect);
+		}
+		if (effect.name.startsWith("spork-thrown")) {
+			chanceToSucceed *= 0.90; // foreign spork: 10% accuracy nerf
+			effectsThatDidSomething.push(effect);
+		}
 	});
+	
+	if (effectsThatDidSomething.length) {
+		response += `Just an FYI, your throw was affected by ${effectsToText(effectsThatDidSomething)}.\n`
+	}
 	
 	if (Math.random () >= chanceToSucceed) { // WHOOPS YOU JUST MISSED
 		response += `Whoops! ${disasterReasons[Math.floor(Math.random() * disasterReasons.length)]} You just lost the ${count(quantity, easyName)} you were about to throw! Oh well.... :P`;
@@ -200,14 +225,21 @@ async function throwItem ({ playerId, item, quantity, targetId }) {
 			break;
 			
 		case "pizzaSlice":
-			changeQuantity(playerId, item, -quantity);
 			let team = getTeamOf(targetId);
 			grubwars.teams[team].forEach(memberId => changeScore(memberId, -3 * quantity));
 			response += `YIKES! Every member on ${target.preferredName}'s team LOST ${3 * quantity} points!`;
 			break;
 			
 		case "spork":
-			response += "This item is not yet supported. :[";
+			let expiresTime = Date.now () + 2 * 60 * 60e3; // now + 1 hour
+			let effectsToAdd = new Array(quantity).fill({
+				"name": "spork-thrown",
+				"expires": expiresTime,
+				"expiresReadable": new Date(expiresTime).toUTCString(),
+			});
+			grubwars.players[targetId].effects.push(...effectsToAdd);
+			let sporkCount = grubwars.players[targetId].effects.reduce((effect, cur) => cur + (effect.name.startsWith("spork") ? 1 : 0), 0); // count number of spork effects
+			response += `${target.preferredName} is now under ${count(sporkCount, "spork effect")}.`;
 			break;
 			
 
