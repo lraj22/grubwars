@@ -136,12 +136,28 @@ function getGrubwars () {
 	return cloneObj(grubwars);
 }
 
+function pruneGrubwarsObj (gw) {
+	gw = cloneObj(gw);
+	let playerIds = [...gw.teams.hackgrub, ...gw.teams.snackclub];
+	let now = Date.now();
+	
+	for (let id of playerIds) {
+		let playersItems = Object.keys(gw.players[id].inventory);
+		for (let item of playersItems) {
+			if (gw.players[id].inventory[item] === 0) delete gw.players[id].inventory[item];
+		}
+		
+		gw.players[id].effects = gw.players[id].effects.filter(effect => now < effect.expires);
+	}
+	return gw;
+}
+
 function saveState (data) {
+	// prune grubwars object ("you have 0 apples" or "effect expired last week" etc.)
+	data = pruneGrubwarsObj(data);
+	
 	// update 'grubwars' so hourly backup is in the know
 	grubwars = cloneObj(data);
-	
-	// TODO: prune grubwars object ("you have 0 apples" or "effect expired last week" etc.)
-	//? grubwars = pruneGrubwars(grubwars);
 	
 	// add debug info to bottom (hence delete first)
 	let saveObj = cloneObj(data);
