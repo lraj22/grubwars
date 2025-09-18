@@ -66,13 +66,14 @@ Grilled Cheese Sandwich: +/- 15 pts <br>
 Peach: (use) +15 pts (throw) -10 pts, 10% chance of "giant peach" (+3 peaches & double damage) <br>
 Pizza: (use) full team +4 pts (throw) target's full team -3 pts <br>
 
-More to be added.
-
-<!--
 ### Rare
 
 Lemon Drizzle Cake: (use) +20% points for next hour (throw) target has -30% points for next 12 hours <br>
 Spork: (use) +5% throw accuracy for 1 hour (throw) target has -10% throw accuracy for 2 hours <br>
+
+More to be added.
+
+<!--
 Wine:
 - (use) every 5 grapes = +0.1x multiplier, i.e. 25 grapes = 1.5x multiplier (for points and damage). throw success rate drops to random(50-70)% <br>
 - (throw) target's attacks are 10% less effective; their success rates also drop to random(50-70)% <br>

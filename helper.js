@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { getGrubwars } from "./datahandler.js";
+import { items } from "./grubwars-data.js";
 const dataFilePath = join(import.meta.dirname, "data/grubwars.json");
 let grubwars = JSON.parse(readFileSync(dataFilePath, "utf8"));
 
@@ -51,7 +52,7 @@ export function effectsToText (effects) {
 		let parts = name.split("-");
 		let isForeign = false;
 		if (parts[1] === "thrown") isForeign = true;
-		effectsText.push(count(quantity, (isForeign ? "foreign " : "") + parts[0]));
+		effectsText.push(count(quantity, (isForeign ? "foreign " : "") + items[parts[0]].name));
 	});
 	
 	// add 'and' if long enough

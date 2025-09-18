@@ -234,7 +234,7 @@ app.command("/grubwars-stats", async (interaction) => {
 		"inventory": (Object.keys(targetPlayer.inventory).length ? commaListify(Object.entries(targetPlayer.inventory).map(([itemName, quantity]) => count(quantity, items[itemName].name.toLowerCase()))) : "None"),
 		"team": getTeamOf(targetId, true) || "None",
 		"score": targetPlayer.score || 0,
-		"effects": targetPlayer.effects.length ? effectsToText(targetPlayer.effects) : "None",
+		"effects": targetPlayer.effects.length ? (effectsToText(targetPlayer.effects) || "None") : "None",
 	};
 	
 	await interaction.respond({
