@@ -19,7 +19,7 @@ function changeQuantity (playerId, itemName, quantity) {
 	grubwars.players[playerId].inventory[itemName] = clamp(0, grubwars.players[playerId].inventory[itemName], null);
 }
 
-function _changeScore (playerId, quantity) { // internal function that handles actual complexity
+function _changeScore ({ method, affectedId, throwerId, quantity }) { // internal function that handles actual complexity
 	let scoreMultiplier = 1;
 	let effectsThatDidSomething = [];
 	
@@ -29,11 +29,11 @@ function _changeScore (playerId, quantity) { // internal function that handles a
 	 * 2. the player had an item [thrown] on them and now has a score nerf (ex. lemon drizzle cake)
 	 * 3. the player had an item [thrown] on them, but the thrower has a throw effectiveness limiter (ex. wine)
 	 * 
-	 * _changeScore does handle (1) & (2), but still has to handle (3), most likely by taking a new argument 'throwerId'
+	 * _changeScore does handle (1) & (2), but has yet to handle (3), most likely by taking a new argument 'throwerId'
 	 */
 	
 	if (quantity > 0) { // if player is gaining points, they are affected by effects like the lemon drizzle cake!
-		grubwars.players[playerId].effects.forEach(function (effect) {
+		grubwars.players[affectedId].effects.forEach(function (effect) {
 			if (Date.now() > effect.expires) return; // if expired, ignore
 			
 			if (effect.name.startsWith("lemonDrizzleCake-used")) {
@@ -49,7 +49,7 @@ function _changeScore (playerId, quantity) { // internal function that handles a
 	}
 	
 	quantity = Math.round(quantity);
-	grubwars.players[playerId].score = clamp(null, grubwars.players[playerId].score + quantity, null);
+	grubwars.players[affectedId].score = clamp(null, grubwars.players[affectedId].score + quantity, null);
 	return effectsThatDidSomething;
 }
 
@@ -66,33 +66,43 @@ async function useItem ({ playerId, item, quantity }) {
 	
 	let effectsThatDidSomething = [];
 	
-	function changeScore (playerId, quantity) { // wrapper
-		effectsThatDidSomething.push(..._changeScore(playerId, quantity));
+	function changeScore (options) { // wrapper
+		let quantity;
+		let affectedId = playerId;
+		let throwerId = playerId;
+		if (typeof options === "object") {
+			if (options.affectedId) affectedId = options.affectedId;
+			if (options.quantity) quantity = options.quantity;
+			if (options.throwerId) throwerId = options.throwerId;
+		} else {
+			quantity = options;
+		}
+		effectsThatDidSomething.push(..._changeScore({ "method": "use", affectedId, throwerId, quantity }));
 	}
 	
 	switch (item) {
 		// rarity: basic
 		case "lowFatMilk":
 			changeQuantity(playerId, item, -quantity);
-			changeScore(playerId, 5 * quantity);
+			changeScore(5 * quantity);
 			response += `You used ${count(quantity, easyName)} and gained ${count(scoreDiff(playerId, oldScore), "point")}!`;
 			break;
 			
 		case "apple":
 			changeQuantity(playerId, item, -quantity);
-			changeScore(playerId, 8 * quantity);
+			changeScore(8 * quantity);
 			response += `You used ${count(quantity, easyName)} and gained ${count(scoreDiff(playerId, oldScore), "point")}!`;
 			break;
 			
 		case "chocolateMilk":
 			changeQuantity(playerId, item, -quantity);
-			changeScore(playerId, 12 * quantity);
+			changeScore(12 * quantity);
 			response += `You used ${count(quantity, easyName)} and gained ${count(scoreDiff(playerId, oldScore), "point")}!`;
 			break;
 			
 		case "grilledCheeseSandwich":
 			changeQuantity(playerId, item, -quantity);
-			changeScore(playerId, 15 * quantity);
+			changeScore(15 * quantity);
 			response += `You used ${count(quantity, easyName)} and gained ${count(scoreDiff(playerId, oldScore), "point")}!`;
 			break;
 			
@@ -110,14 +120,17 @@ async function useItem ({ playerId, item, quantity }) {
 		// rarity: uncommon
 		case "peach":
 			changeQuantity(playerId, item, -quantity);
-			changeScore(playerId, 15 * quantity);
+			changeScore(15 * quantity);
 			response += `You used ${count(quantity, easyName)} and gained ${count(scoreDiff(playerId, oldScore), "point")}!`;
 			break;
 			
 		case "pizzaSlice": {
 			changeQuantity(playerId, item, -quantity);
 			let team = getTeamOf(playerId);
-			grubwars.teams[team].forEach(memberId => changeScore(memberId, 4 * quantity));
+			grubwars.teams[team].forEach(memberId => changeScore({
+				"affectedId": memberId,
+				"quantity": 4 * quantity,
+			}));
 			response += `WOAH! Every member on your team gained ${4 * quantity} points!`;
 		} break;
 		
@@ -221,34 +234,44 @@ async function throwItem ({ playerId, item, quantity, targetId }) {
 		return [isSuccess, response];
 	}
 	
-	function changeScore (playerId, quantity) { // wrapper
-		effectsThatDidSomething.push(..._changeScore(playerId, quantity));
+	function changeScore (options) { // wrapper
+		let affectedId, quantity;
+		let throwerId = playerId;
+		if (typeof options === "object") {
+			if (options.affectedId) affectedId = options.affectedId;
+			if (options.quantity) quantity = options.quantity;
+			if (options.throwerId) throwerId = options.throwerId;
+		} else {
+			affectedId = targetId;
+			quantity = options;
+		}
+		effectsThatDidSomething.push(..._changeScore({ "method": "throw", affectedId, throwerId, quantity }));
 	}
 	
 	switch (item) {
 		// rarity: basic
 		case "lowFatMilk":
-			changeScore(targetId, -5 * quantity);
+			changeScore(-5 * quantity);
 			response += `You threw ${count(quantity, easyName)} and ${target.preferredName} lost ${count(-scoreDiff(targetId, oldTargetScore), "point")}!`;
 			break;
 			
 		case "apple":
-			changeScore(targetId, -8 * quantity);
+			changeScore(-8 * quantity);
 			response += `You threw ${count(quantity, easyName)} and ${target.preferredName} lost ${count(-scoreDiff(targetId, oldTargetScore), "point")}!`;
 			break;
 			
 		case "chocolateMilk":
-			changeScore(targetId, -12 * quantity);
+			changeScore(-12 * quantity);
 			response += `You threw ${count(quantity, easyName)} and ${target.preferredName} lost ${count(-scoreDiff(targetId, oldTargetScore), "point")}!`;
 			break;
 			
 		case "grilledCheeseSandwich":
-			changeScore(targetId, -15 * quantity);
+			changeScore(-15 * quantity);
 			response += `You threw ${count(quantity, easyName)} and ${target.preferredName} lost ${count(-scoreDiff(targetId, oldTargetScore), "point")}!`;
 			break;
 			
 		case "grape":
-			changeScore(targetId, -2 * quantity);
+			changeScore(-2 * quantity);
 			response += `You threw ${count(quantity, easyName)} and ${target.preferredName} lost ${count(-scoreDiff(targetId, oldTargetScore), "point")}!`;
 			break;
 			
@@ -265,13 +288,16 @@ async function throwItem ({ playerId, item, quantity, targetId }) {
 					extraResponse = ` Also, ${giantPeachCount} of your peaches turned into Giant Peaches! You gained ${3 * giantPeachCount} peaches and did ${10 * giantPeachCount} extra damage!`;
 				}
 			}
-			changeScore(targetId, -10 * (quantity + giantPeachCount));
+			changeScore(-10 * (quantity + giantPeachCount));
 			response += `You threw ${count(quantity, easyName)} and ${target.preferredName} lost ${count(-scoreDiff(targetId, oldTargetScore), "point")}!` + extraResponse;
 			break;
 			
 		case "pizzaSlice": {
 			let team = getTeamOf(targetId);
-			grubwars.teams[team].forEach(memberId => changeScore(memberId, -3 * quantity));
+			grubwars.teams[team].forEach(memberId => changeScore({
+				"affectedId": memberId, 
+				"quantity": -3 * quantity,
+			}));
 			response += `YIKES! Every member on ${target.preferredName}'s team LOST ${3 * quantity} points!`;
 		} break;
 			
