@@ -23,6 +23,15 @@ function _changeScore (playerId, quantity) { // internal function that handles a
 	let scoreMultiplier = 1;
 	let effectsThatDidSomething = [];
 	
+	/*
+	 * a listing of complexities to handle
+	 * 1. the player [used] item and now has a score boost (ex. lemon drizzle cake)
+	 * 2. the player had an item [thrown] on them and now has a score nerf (ex. lemon drizzle cake)
+	 * 3. the player had an item [thrown] on them, but the thrower has a throw effectiveness limiter (ex. wine)
+	 * 
+	 * _changeScore does handle (1) & (2), but still has to handle (3), most likely by taking a new argument 'throwerId'
+	 */
+	
 	if (quantity > 0) { // if player is gaining points, they are affected by effects like the lemon drizzle cake!
 		grubwars.players[playerId].effects.forEach(function (effect) {
 			if (Date.now() > effect.expires) return; // if expired, ignore

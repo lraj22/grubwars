@@ -58,7 +58,7 @@ Grilled Cheese Sandwich: +/- 15 pts <br>
 ### Uncommon
 
 Peach: (use) +15 pts (throw) -10 pts, 10% chance of "giant peach" (+3 peaches & double damage) <br>
-Pizza: (use) full team +4 pts (throw) target's full team -3 pts <br>
+Pizza slice: (use) full team +4 pts (throw) target's full team -3 pts <br>
 
 ### Rare
 
