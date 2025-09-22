@@ -183,10 +183,12 @@ app.command(/^\/grubwars-(use|throw)$/, async (interaction) => {
 	let inventory = Object.entries(grubwars.players[playerId].inventory)
 		.filter(([_, quantity]) =>  quantity > 0)
 		.map(([itemName, quantity]) => {
+			let parts = itemName.split("-");
+			let processingName = parts[0];
 			return {
 				"text": {
 					"type": "plain_text",
-					"text": items[itemName].name + ` (${quantity})`,
+					"text": items[processingName].name + (parts[1] ? `[${parts[1]}]` : "") + ` (${quantity})`,
 					"emoji": false,
 				},
 				"value": itemName,
@@ -231,7 +233,7 @@ app.command("/grubwars-stats", async (interaction) => {
 	
 	let data = {
 		"user": targetPlayer.preferredName,
-		"inventory": (Object.keys(targetPlayer.inventory).length ? commaListify(Object.entries(targetPlayer.inventory).map(([itemName, quantity]) => count(quantity, items[itemName].name.toLowerCase()))) : "None"),
+		"inventory": (Object.keys(targetPlayer.inventory).length ? commaListify(Object.entries(targetPlayer.inventory).map(([itemName, quantity]) => count(quantity, items[itemName.split("-")[0]].name.toLowerCase()))) : "None"),
 		"team": getTeamOf(targetId, true) || "None",
 		"score": targetPlayer.score || 0,
 		"effects": targetPlayer.effects.length ? (effectsToText(targetPlayer.effects) || "None") : "None",
@@ -335,8 +337,9 @@ app.action("confirm-ut", async (interaction) => {
 		return await ephMessage("Please select an item.");
 	}
 	
+	let processingName = item.split("-")[0];
 	let availableQuantity = player.inventory[item] || 0;
-	let easyName = items[item].name;
+	let easyName = items[processingName].name;
 	
 	if (availableQuantity < quantity) {
 		return await ephMessage(`You don't have ${count(quantity, easyName)}, only ${availableQuantity}.`);

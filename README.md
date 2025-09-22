@@ -75,8 +75,8 @@ More to be added.
 
 <!--
 Wine:
-- (use) every 5 grapes = +0.1x multiplier, i.e. 25 grapes = 1.5x multiplier (for points and damage). throw success rate drops to random(50-70)% <br>
-- (throw) target's attacks are 10% less effective; their success rates also drop to random(50-70)% <br>
+- (use) every 5 grapes = +0.1x multiplier, i.e. 25 grapes = 1.5x multiplier (for points and damage). throw success rate drops to (90 - number of grapes)%, minimum 50%. Wears off after 3 hours <br>
+- (throw) target's attacks are (number of grapes / 2)% maximum 50% less effective; their success rates also drop to (90 - number of grapes)%, minimum 50%. Wears off after 3 hours <br>
 
 ### Combinations
 

@@ -61,7 +61,8 @@ async function useItem ({ playerId, item, quantity }) {
 	grubwars = getGrubwars();
 	let response = "";
 	let oldScore = grubwars.players[playerId].score;
-	let easyName = items[item].name;
+	let processingName = item.split("-")[0];
+	let easyName = items[processingName].name;
 	let isSuccess = true;
 	
 	let effectsThatDidSomething = [];
@@ -80,7 +81,7 @@ async function useItem ({ playerId, item, quantity }) {
 		effectsThatDidSomething.push(..._changeScore({ "method": "use", affectedId, throwerId, quantity }));
 	}
 	
-	switch (item) {
+	switch (processingName) {
 		// rarity: basic
 		case "lowFatMilk":
 			changeQuantity(playerId, item, -quantity);
@@ -106,15 +107,17 @@ async function useItem ({ playerId, item, quantity }) {
 			response += `You used ${count(quantity, easyName)} and gained ${count(scoreDiff(playerId, oldScore), "point")}!`;
 			break;
 			
-		case "grape":
+		case "grape": {
 			if (quantity < 20) {
 				response += "Error: You must use _at least_ 20 grapes at once to make wine.";
 				isSuccess = false;
 				break;
 			}
-			response += "This item is not yet supported. :[";
-			isSuccess = false;
-			break;
+			changeQuantity(playerId, item, -quantity);
+			changeQuantity(playerId, "wine-" + quantity, 1);
+			let potency = 1 + (quantity / 50);
+			response += `You used ${count(quantity, easyName)} and obtained Wine with a potency of ${potency}x. This multiplier affects both points and damage when used!`;
+		} break;
 			
 
 		// rarity: uncommon
@@ -162,8 +165,7 @@ async function useItem ({ playerId, item, quantity }) {
 			let ldcEffects = grubwars.players[playerId].effects.filter(effect => effect.name.startsWith("lemonDrizzleCake"));
 			response += `You are now under ${effectsToText(ldcEffects)}.`;
 		} break;
-			
-			
+		
 		case "trashGrabber":
 			response += "This item is not yet supported. :[";
 			isSuccess = false;
@@ -174,12 +176,22 @@ async function useItem ({ playerId, item, quantity }) {
 			isSuccess = false;
 			break;
 			
-
+			
 		// rarity: epic
-		case "wine":
-			response += "This item is not yet supported. :[";
-			isSuccess = false;
-			break;
+		case "wine": {
+			changeQuantity(playerId, item, -quantity);
+			let grapesCount = parseInt(item.split("-")[1])
+			let expiresTime = Date.now() + 3 * 60 * 60e3; // now + 3 hours
+			let expiresTimeReadable = new Date(expiresTime).toUTCString();
+			let effectsToAdd = new Array(quantity).fill({
+				"name": `wine-${grapesCount}-used`,
+				"expires": expiresTime,
+				"expiresReadable": expiresTimeReadable,
+			});
+			grubwars.players[playerId].effects.push(...effectsToAdd);
+			let wineEffects = grubwars.players[playerId].effects.filter(effect => effect.name.startsWith("wine"));
+			response += `You are now under ${effectsToText(wineEffects)}.`;
+		} break;
 			
 		case "bullyingPower":
 			response += "This item is not yet supported. :[";
@@ -206,7 +218,8 @@ async function throwItem ({ playerId, item, quantity, targetId }) {
 	let target = grubwars.players[targetId];
 	let oldScore = grubwars.players[playerId].score;
 	let oldTargetScore = grubwars.players[targetId].score;
-	let easyName = items[item].name;
+	let processingName = item.split("-")[0];
+	let easyName = items[processingName].name;
 	let response = "";
 	let isSuccess = true;
 	
@@ -248,7 +261,7 @@ async function throwItem ({ playerId, item, quantity, targetId }) {
 		effectsThatDidSomething.push(..._changeScore({ "method": "throw", affectedId, throwerId, quantity }));
 	}
 	
-	switch (item) {
+	switch (processingName) {
 		// rarity: basic
 		case "lowFatMilk":
 			changeScore(-5 * quantity);
@@ -340,10 +353,19 @@ async function throwItem ({ playerId, item, quantity, targetId }) {
 			
 
 		// rarity: epic
-		case "wine":
-			response += "This item is not yet supported. :[";
-			isSuccess = false;
-			break;
+		case "wine": {
+			let grapesCount = parseInt(item.split("-")[1])
+			let expiresTime = Date.now() + 3 * 60 * 60e3; // now + 3 hours
+			let expiresTimeReadable = new Date(expiresTime).toUTCString();
+			let effectsToAdd = new Array(quantity).fill({
+				"name": `wine-${grapesCount}-thrown`,
+				"expires": expiresTime,
+				"expiresReadable": expiresTimeReadable,
+			});
+			grubwars.players[targetId].effects.push(...effectsToAdd);
+			let wineEffects = grubwars.players[targetId].effects.filter(effect => effect.name.startsWith("wine"));
+			response += `${target.preferredName} is now under ${effectsToText(wineEffects)}.`;
+		} break;
 			
 		case "bullyingPower":
 			response += "This item is not yet supported. :[";
