@@ -1,5 +1,5 @@
 import { getGrubwars, saveState } from "./datahandler.js";
-import { items, disasterReasons } from "./grubwars-data.js";
+import { items, disasterReasons, wineDisasterReasons } from "./grubwars-data.js";
 import { count, effectsToText, getTeamOf } from "./helper.js";
 
 let grubwars = {};
@@ -22,6 +22,7 @@ function changeQuantity (playerId, itemName, quantity) {
 function _changeScore ({ method, affectedId, throwerId, quantity }) { // internal function that handles actual complexity
 	let scoreMultiplier = 1;
 	let effectsThatDidSomething = [];
+	let now = Date.now();
 	
 	/*
 	 * a listing of complexities to handle
@@ -32,21 +33,41 @@ function _changeScore ({ method, affectedId, throwerId, quantity }) { // interna
 	 * _changeScore does handle (1) & (2), but has yet to handle (3), most likely by taking a new argument 'throwerId'
 	 */
 	
-	if (quantity > 0) { // if player is gaining points, they are affected by effects like the lemon drizzle cake!
-		grubwars.players[affectedId].effects.forEach(function (effect) {
-			if (Date.now() > effect.expires) return; // if expired, ignore
-			
-			if (effect.name.startsWith("lemonDrizzleCake-used")) {
-				scoreMultiplier *= 1.20; // self lemon drizzle cake: 20% points boost
-				effectsThatDidSomething.push(effect);
-			}
-			else if (effect.name.startsWith("lemonDrizzleCake-thrown")) {
-				scoreMultiplier *= 0.70; // foreign lemon drizzle cake: 30% points nerf
-				effectsThatDidSomething.push(effect);
-			}
+	grubwars.players[affectedId].effects.forEach(function (effect) {
+		if (now > effect.expires) return; // if expired, ignore
+		
+		// first, check if it is an effect that applies regardless of (quantity >? 0)
+		if (effect.name.startsWith("wine") && effect.name.endsWith("-used")) {
+			let grapesCount = effect.name.split("-")[1];
+			let potency = 1 + (grapesCount / 50);
+			scoreMultiplier *= potency;
+			effectsThatDidSomething.push(effect);
+		}
+		
+		// now check effects that only affect gaining points (quantity > 0)
+		if (quantity <= 0) return;
+		if (effect.name.startsWith("lemonDrizzleCake-used")) {
+			scoreMultiplier *= 1.20; // self lemon drizzle cake: 20% points boost
+			effectsThatDidSomething.push(effect);
+		}
+		else if (effect.name.startsWith("lemonDrizzleCake-thrown")) {
+			scoreMultiplier *= 0.70; // foreign lemon drizzle cake: 30% points nerf
+			effectsThatDidSomething.push(effect);
+		}
+	});
+	if (method === "throw") { // score is affected on throws if thrower is under wine
+		grubwars.players[throwerId].effects.filter(({ expires, name }) => (
+			(now <= expires) &&
+			name.startsWith("wine") &&
+			name.endsWith("-thrown"))
+		).forEach(effect => {
+			let grapesCount = effect.name.split("-")[1];
+			let potency = clamp(50, 100 - (grapesCount / 2), null) * 0.01;
+			scoreMultiplier *= potency;
+			effectsThatDidSomething.push(effect);
 		});
-		quantity *= scoreMultiplier;
 	}
+	quantity *= scoreMultiplier;
 	
 	quantity = Math.round(quantity);
 	grubwars.players[affectedId].score = clamp(null, grubwars.players[affectedId].score + quantity, null);
@@ -227,6 +248,7 @@ async function throwItem ({ playerId, item, quantity, targetId }) {
 	
 	let chanceToSucceed = 0.90;
 	let effectsThatDidSomething = [];
+	let affectedByWine = false;
 	
 	player.effects.forEach(function (effect) {
 		if (Date.now() > effect.expires) return; // if expired, ignore
@@ -239,10 +261,22 @@ async function throwItem ({ playerId, item, quantity, targetId }) {
 			chanceToSucceed *= 0.90; // foreign spork: 10% accuracy nerf
 			effectsThatDidSomething.push(effect);
 		}
+		else if (effect.name.startsWith("wine")) {
+			let grapesCount = effect.name.split("-")[1];
+			chanceToSucceed *= clamp(0.50, 0.90 - (grapesCount / 100), null); // wine: (90 - number of grapes)% accuracy nerf (maximum nerf is 50%)
+			effectsThatDidSomething.push(effect);
+			affectedByWine = true;
+		}
 	});
 	
 	if (Math.random () >= chanceToSucceed) { // WHOOPS YOU JUST MISSED
-		response += `Whoops! ${disasterReasons[Math.floor(Math.random() * disasterReasons.length)]} You just lost the ${count(quantity, easyName)} you were about to throw! Oh well.... :P`;
+		let reasons = [];
+		if (affectedByWine) reasons.push(...wineDisasterReasons);
+		reasons.push(...disasterReasons);
+		response += `Whoops! ${reasons[Math.floor(Math.random() * reasons.length)]} You just lost the ${count(quantity, easyName)} you were about to throw! Oh well.... :P`;
+		if (effectsThatDidSomething.length) {
+			response = `Just an FYI, your throw was affected by ${effectsToText(effectsThatDidSomething)}.\n` + response;
+		}
 		saveState(grubwars);
 		return [isSuccess, response];
 	}

@@ -71,17 +71,18 @@ Pizza slice: (use) full team +4 pts (throw) target's full team -3 pts <br>
 Lemon Drizzle Cake: (use) +20% points for next hour (throw) target has -30% points for next 12 hours <br>
 Spork: (use) +5% throw accuracy for 1 hour (throw) target has -10% throw accuracy for 2 hours <br>
 
-More to be added.
-
-<!--
 Wine:
 - (use) every 5 grapes = +0.1x multiplier, i.e. 25 grapes = 1.5x multiplier (for points and damage). throw success rate drops to (90 - number of grapes)%, minimum 50%. Wears off after 3 hours <br>
 - (throw) target's attacks are (number of grapes / 2)% maximum 50% less effective; their success rates also drop to (90 - number of grapes)%, minimum 50%. Wears off after 3 hours <br>
 
+More to be added.
+
 ### Combinations
 
-Pizza Box: (use) need 4 pizza slices, +75 pts (throw) -20 pts & target loses random(2-4) pizza slices <br>
+<!--
+Pizza Box: (use) need 4 pizza slices, +75 pts (throw) -20 pts & target loses random(2-4) pizza slices <br>-->
 Grapes: (use) need 20+ grapes, make wine; more grapes, more potent wine (throw) -2 pts <br>
+<!--
 Bullying Power: (use/throw) if 3 people use this towards the same target, that target's inventory & lunch money is stolen and redistributed between the bullies <br>
 
 ### Spells
