@@ -79,8 +79,7 @@ More to be added.
 
 ### Combinations
 
-<!--
-Pizza Box: (use) need 4 pizza slices, +75 pts (throw) -20 pts & target loses random(2-4) pizza slices <br>-->
+Pizza Box: (use) need 4 pizza slices, +75 pts (throw) -20 pts & target loses random(2-4) pizza slices <br>
 Grapes: (use) need 20+ grapes, make wine; more grapes, more potent wine (throw) -2 pts <br>
 <!--
 Bullying Power: (use/throw) if 3 people use this towards the same target, that target's inventory & lunch money is stolen and redistributed between the bullies <br>

@@ -192,10 +192,19 @@ async function useItem ({ playerId, item, quantity }) {
 			isSuccess = false;
 			break;
 			
-		case "pizzaBox":
-			response += "This item is not yet supported. :[";
-			isSuccess = false;
-			break;
+		case "pizzaBox": {
+			let pizzaSlicesRequired = quantity * 4;
+			let pizzaSliceCount = (grubwars.players[playerId].inventory.pizzaSlice || 0);
+			if (pizzaSliceCount < pizzaSlicesRequired) {
+				response += `Error: you don't have enough pizza slices! You need 4 per pizza box. You have ${pizzaSliceCount} and need ${pizzaSlicesRequired}.`;
+				isSuccess = false;
+				break;
+			}
+			changeQuantity(playerId, item, -quantity);
+			changeQuantity(playerId, "pizzaSlice", -quantity * 4);
+			changeScore(quantity * 75);
+			response += `Pizza's on you! You just used ${count(quantity, easyName)} and earned ${quantity * 75} points!`;
+		} break;
 			
 			
 		// rarity: epic
@@ -380,10 +389,13 @@ async function throwItem ({ playerId, item, quantity, targetId }) {
 			isSuccess = false;
 			break;
 			
-		case "pizzaBox":
-			response += "This item is not yet supported. :[";
-			isSuccess = false;
-			break;
+		case "pizzaBox": {
+			changeScore(-20 * quantity);
+			let oldSliceCount = grubwars.players[targetId].inventory.pizzaSlice;
+			let slicesLost = Math.floor(Math.random() * 3 * quantity) + (2 * quantity); // from 2-4 (multiplied by quantity)
+			grubwars.players[targetId].inventory.pizzaSlice = clamp(0, oldSliceCount - slicesLost, null);
+			response += `The power of pizza is pleasing! ${target.preferredName} lost ${-20 * quantity} points and lost up to ${count(slicesLost, "pizza slice")} (they had ${oldSliceCount}).`;
+		} break;
 			
 
 		// rarity: epic
