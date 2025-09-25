@@ -188,8 +188,9 @@ async function useItem ({ playerId, item, quantity }) {
 		} break;
 		
 		case "trashGrabber":
-			response += "This item is not yet supported. :[";
-			isSuccess = false;
+			changeQuantity(playerId, item, -quantity);
+			changeScore(quantity * 50);
+			response += `Awesome! You just scored ${quantity * 50} points with those ${count(quantity, easyName)}!`;
 			break;
 			
 		case "pizzaBox": {
@@ -385,8 +386,8 @@ async function throwItem ({ playerId, item, quantity, targetId }) {
 		} break;
 			
 		case "trashGrabber":
-			response += "This item is not yet supported. :[";
-			isSuccess = false;
+			changeQuantity(playerId, item, quantity - 1); // you can only use one trash grabber at a time
+			isSuccess = "trashGrabberTakeOne"; // send to subprocess
 			break;
 			
 		case "pizzaBox": {

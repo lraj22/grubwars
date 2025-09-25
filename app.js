@@ -160,6 +160,23 @@ app.command("/grubwars-claim", async (interaction) => {
 	});
 });
 
+function inventoryListify (grubwars, playerId) {
+	return Object.entries(grubwars.players[playerId].inventory)
+		.filter(([_, quantity]) =>  quantity > 0)
+		.map(([itemName, quantity]) => {
+			let parts = itemName.split("-");
+			let processingName = parts[0];
+			return {
+				"text": {
+					"type": "plain_text",
+					"text": items[processingName].name + (parts[1] ? `[${parts[1]}]` : "") + ` (${quantity})`,
+					"emoji": false,
+				},
+				"value": itemName,
+			};
+		});
+}
+
 app.command(/^\/grubwars-(use|throw)$/, async (interaction) => {
 	// acknowledge & log
 	await interaction.ack();
@@ -180,20 +197,7 @@ app.command(/^\/grubwars-(use|throw)$/, async (interaction) => {
 		return;
 	}
 	
-	let inventory = Object.entries(grubwars.players[playerId].inventory)
-		.filter(([_, quantity]) =>  quantity > 0)
-		.map(([itemName, quantity]) => {
-			let parts = itemName.split("-");
-			let processingName = parts[0];
-			return {
-				"text": {
-					"type": "plain_text",
-					"text": items[processingName].name + (parts[1] ? `[${parts[1]}]` : "") + ` (${quantity})`,
-					"emoji": false,
-				},
-				"value": itemName,
-			};
-		});
+	let inventory = inventoryListify(grubwars, playerId);
 	
 	await interaction.respond({
 		"response_type": "ephemeral",
@@ -361,12 +365,33 @@ app.action("confirm-ut", async (interaction) => {
 	if (method === "throw") [isSuccess, actionResponse] = await throwItem({ playerId, item, quantity, targetId });
 	response += actionResponse;
 	
+	const afterOperations = {
+		"trashGrabberTakeOne": async function () {
+			await interaction.client.chat.postEphemeral({
+				"channel": interaction.body.channel.id,
+				"user": playerId,
+				"text": "You get to take one item from your target.",
+				"blocks": getBlock("tgStealOne", {
+					"target": grubwars.players[targetId].preferredName,
+					"targetId": targetId,
+					"inventory": inventoryListify(grubwars, targetId),
+				}),
+			});
+			return [true, false];
+		},
+	};
+	
 	// remove interface if successful
+	while (typeof isSuccess === "string") {
+		[isSuccess, actionResponse] = await afterOperations[isSuccess]();
+		if (actionResponse !== false) response += actionResponse;
+		else response = "";
+	}
 	if (isSuccess) {
 		// remove original interface, operation success
 		await interaction.respond({ "delete_original": true });
 		// post message
-		return await interaction.client.chat.postMessage({
+		if (response) return await interaction.client.chat.postMessage({
 			"channel": interaction.body.channel.id,
 			"text": response,
 		});
@@ -374,6 +399,27 @@ app.action("confirm-ut", async (interaction) => {
 		// don't delete original, just post a closable ephemeral message
 		return await ephMessage(response);
 	}
+});
+
+app.action("tg-steal-one", async (interaction) => {
+	// acknowledge
+	await interaction.ack();
+	let { item } = getValues(interaction);
+	let playerId = interaction.body.user.id;
+	let targetId = interaction.action.value;
+	let grubwars = getGrubwars();
+	let oldAmount = grubwars.players[playerId].inventory[item];
+	
+	grubwars.players[playerId].inventory[item] = (oldAmount ? (oldAmount + 1) : 1);
+	grubwars.players[targetId].inventory[item] -= 1;
+	
+	saveState(grubwars);
+	
+	await interaction.respond({ "delete_original": true });
+	return await interaction.client.chat.postMessage({
+		"channel": interaction.body.channel.id,
+		"text": `<@${playerId}> Heh, you just stole ${count(1, items[item].name)} from ${grubwars.players[targetId].preferredName} using a trash grabber.`,
+	});
 });
 
 app.action("help-selected", async (interaction) => {

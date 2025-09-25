@@ -262,6 +262,54 @@ blocks.useThrow = JSON.stringify([
 	}
 ]);
 
+blocks.tgStealOne = JSON.stringify([
+	{
+		"type": "section",
+		"text": {
+			"type": "mrkdwn",
+			"text": "You may now steal one item from {target}."
+		}
+	},
+	{
+		"type": "divider"
+	},
+	{
+		"type": "section",
+		"text": {
+			"type": "mrkdwn",
+			"text": "*Which item?*"
+		},
+		"accessory": {
+			"type": "static_select",
+			"placeholder": {
+				"type": "plain_text",
+				"text": "Select an item (required)",
+				"emoji": true
+			},
+			"options": "r:inventory",
+			"action_id": "ut-select-item"
+		}
+	},
+	{
+		"type": "divider"
+	},
+	{
+		"type": "actions",
+		"elements": [
+			{
+				"type": "button",
+				"text": {
+					"type": "plain_text",
+					"text": "Steal",
+					"emoji": true
+				},
+				"value": "{targetId}",
+				"action_id": "tg-steal-one"
+			}
+		]
+	}
+]);
+
 blocks.closableText = JSON.stringify([
 	{
 		"type": "section",
