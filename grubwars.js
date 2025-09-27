@@ -1,7 +1,7 @@
 import { getGrubwars, saveState } from "./datahandler.js";
 import { items, disasterReasons, wineDisasterReasons } from "./grubwars-data.js";
 import { commaListify, count, effectsToText, getTeamOf } from "./helper.js";
-const INDEFINITE_FUTURE_TIMESTAMP = 1e15;
+const INDEFINITE_FUTURE_TIMESTAMP = 1e15; // random date in far future
 const INDEFINITE_FUTURE_TIMESTAMP_READABLE = new Date(INDEFINITE_FUTURE_TIMESTAMP).toUTCString();
 
 let grubwars = {};
@@ -401,6 +401,10 @@ async function throwItem ({ playerId, item, quantity, targetId }) {
 		} break;
 			
 		case "trashGrabber":
+			if (Object.keys(grubwars.players[targetId].inventory).length === 0) {
+				response += "You can't steal from this person -- they have nothing to steal!";
+				break;
+			}
 			changeQuantity(playerId, item, quantity - 1); // you can only use one trash grabber at a time
 			isSuccess = "trashGrabberTakeOne"; // send to subprocess
 			break;
@@ -467,13 +471,14 @@ function stealByBullying (grubwars, playerId, bullyIds) {
 	let inventoryItems = [];
 	let player = grubwars.players[playerId];
 	let inventoryItemNames = Object.keys(player.inventory);
-	let thingsBulliesGet = [];
-	for (let x of new Array(bullyIds.length).fill(0)) {
-		thingsBulliesGet.push({});
-	}
+	let thingsBulliesGet = new Array(bullyIds.length).fill(0).map(_ => {}); // workaround to ensure each gets their own {}
+	
+	// load all items to inventoryItems
 	for (let itemName of inventoryItemNames) {
 		inventoryItems.push(...new Array(player.inventory[itemName]).fill(itemName));
 	}
+	
+	// add each item randomly to the bullies
 	for (let item of inventoryItems) {
 		let playerNumber = Math.floor(Math.random() * bullyIds.length);
 		let playerWhoGetsItem = bullyIds[playerNumber];
@@ -487,6 +492,7 @@ function stealByBullying (grubwars, playerId, bullyIds) {
 		thingsBulliesGet[playerNumber][item]++;
 	}
 	
+	// clear bullied's inventory and their unexpirable effects
 	grubwars.players[playerId].inventory = {};
 	grubwars.players[playerId].effects = grubwars.players[playerId].effects.filter(effect => !effect.name.startsWith("bullyingPower"));
 	
@@ -496,7 +502,7 @@ function stealByBullying (grubwars, playerId, bullyIds) {
 			commaListify(Object.entries(things).map(
 				([itemName, quantity]) => count(quantity, items[itemName.split("-")[0]].name)
 			)) + "!"
-	).join(" ");// turns quantity object into list; info about who stole what
+	).join(" "); // turns quantity object into list; info about who stole what
 }
 
 export {

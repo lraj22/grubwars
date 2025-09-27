@@ -161,6 +161,7 @@ app.command("/grubwars-claim", async (interaction) => {
 });
 
 function inventoryListify (grubwars, playerId) {
+	// careful! When you use this function, ensure that you provide an alternative method for if their inventory is empty.
 	return Object.entries(grubwars.players[playerId].inventory)
 		.filter(([_, quantity]) =>  quantity > 0)
 		.map(([itemName, quantity]) => {
@@ -198,6 +199,15 @@ app.command(/^\/grubwars-(use|throw)$/, async (interaction) => {
 	}
 	
 	let inventory = inventoryListify(grubwars, playerId);
+	if (inventory.length === 0) {
+		return await interaction.respond({
+			"response_type": "ephemeral",
+			"blocks": getBlock("closableText", {
+				"text": "You have nothing which can be used or thrown.",
+			}),
+			"delete_original": true,
+		});
+	}
 	
 	await interaction.respond({
 		"response_type": "ephemeral",
@@ -374,7 +384,7 @@ app.action("confirm-ut", async (interaction) => {
 				"blocks": getBlock("tgStealOne", {
 					"target": grubwars.players[targetId].preferredName,
 					"targetId": targetId,
-					"inventory": inventoryListify(grubwars, targetId),
+					"inventory": inventoryListify(grubwars, targetId), // we already made sure their inventory wasn't empty
 				}),
 			});
 			return [true, false];

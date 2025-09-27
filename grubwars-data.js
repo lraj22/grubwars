@@ -247,13 +247,6 @@ function weightsToPercents (weights) { // developer visualization purposes, not 
 	return [percents, cleanOutput.join("\n")];
 }
 
-const wineDisasterReasons = [
-	"the wine blurs your vision and you miss.",
-	"as you throw the item intoxicated, it disappears. Huh? Whatever.",
-	"as you get ready to throw, you realize that you had one too many bottles of wine.",
-	"the item you just attempted to throw acted all intoxicated and refused to be thrown.",
-].map(reason => "Don't do underage drinking... " + reason);
-
 const disasterReasons = [
 	"You slipped on a banana peel!",
 	"The table you were standing on fell over. Hmm.",
@@ -262,6 +255,13 @@ const disasterReasons = [
 	"Your eyes were splattered with lemon meringue pie the instant you tried to throw. It... didn't go very well.",
 	"A teacher appears in your peripheral and you instinctually run.",
 ];
+
+const wineDisasterReasons = [ // will only show if wine is affecting your throw
+	"the wine blurs your vision and you miss.",
+	"as you throw the item intoxicated, it disappears. Huh? Whatever.",
+	"as you get ready to throw, you realize that you had one too many bottles of wine.",
+	"the item you just attempted to throw acted all intoxicated and refused to be thrown.",
+].map(reason => "Don't do underage drinking... " + reason);
 
 export {
 	items,
