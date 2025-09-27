@@ -1,6 +1,8 @@
 import { getGrubwars, saveState } from "./datahandler.js";
 import { items, disasterReasons, wineDisasterReasons } from "./grubwars-data.js";
-import { count, effectsToText, getTeamOf } from "./helper.js";
+import { commaListify, count, effectsToText, getTeamOf } from "./helper.js";
+const INDEFINITE_FUTURE_TIMESTAMP = 1e15;
+const INDEFINITE_FUTURE_TIMESTAMP_READABLE = new Date(INDEFINITE_FUTURE_TIMESTAMP).toUTCString();
 
 let grubwars = {};
 
@@ -29,8 +31,6 @@ function _changeScore ({ method, affectedId, throwerId, quantity }) { // interna
 	 * 1. the player [used] item and now has a score boost (ex. lemon drizzle cake)
 	 * 2. the player had an item [thrown] on them and now has a score nerf (ex. lemon drizzle cake)
 	 * 3. the player had an item [thrown] on them, but the thrower has a throw effectiveness limiter (ex. wine)
-	 * 
-	 * _changeScore does handle (1) & (2), but has yet to handle (3), most likely by taking a new argument 'throwerId'
 	 */
 	
 	grubwars.players[affectedId].effects.forEach(function (effect) {
@@ -224,10 +224,25 @@ async function useItem ({ playerId, item, quantity }) {
 			response += `You are now under ${effectsToText(wineEffects)}.`;
 		} break;
 			
-		case "bullyingPower":
-			response += "This item is not yet supported. :[";
-			isSuccess = false;
-			break;
+		case "bullyingPower": {
+			let currentBPEffects = grubwars.players[playerId].effects.filter(effect => effect.name.startsWith("bullyingPower"));
+			let maxUsable = 3 - currentBPEffects.length; // for example, if two effects are already present, you can only add one more.
+			let amountUsed = clamp(0, quantity, maxUsable);
+			let effectsToAdd = new Array(amountUsed).fill({
+				"name": `bullyingPower-${playerId}-thrown`,
+				"expires": INDEFINITE_FUTURE_TIMESTAMP,
+				"expiresReadable": INDEFINITE_FUTURE_TIMESTAMP_READABLE,
+			});
+			currentBPEffects.push(...effectsToAdd);
+			grubwars.players[playerId].effects.push(...effectsToAdd);
+			changeQuantity(playerId, item, -amountUsed);
+			if (amountUsed !== quantity) response += `You could only use ${count(amountUsed, easyName)} instead of ${quantity}. `;
+			if (currentBPEffects.length === 3) {
+				response += stealByBullying(grubwars, playerId, currentBPEffects.map(effect => effect.name.split("-")[1]));
+			} else {
+				response += `There are now ${count(currentBPEffects.length, easyName)} on you! When you reach 3, you will be stolen from!`;
+			}
+		} break;
 			
 		default:
 			response += "Unknown item selected...";
@@ -414,10 +429,25 @@ async function throwItem ({ playerId, item, quantity, targetId }) {
 			response += `${target.preferredName} is now under ${effectsToText(wineEffects)}.`;
 		} break;
 			
-		case "bullyingPower":
-			response += "This item is not yet supported. :[";
-			isSuccess = false;
-			break;
+		case "bullyingPower": {
+			let currentBPEffects = grubwars.players[targetId].effects.filter(effect => effect.name.startsWith("bullyingPower"));
+			let maxUsable = 3 - currentBPEffects.length; // for example, if two effects are already present, you can only add one more.
+			let amountUsed = clamp(0, quantity, maxUsable);
+			let effectsToAdd = new Array(amountUsed).fill({
+				"name": `bullyingPower-${playerId}-thrown`,
+				"expires": INDEFINITE_FUTURE_TIMESTAMP,
+				"expiresReadable": INDEFINITE_FUTURE_TIMESTAMP_READABLE,
+			});
+			currentBPEffects.push(...effectsToAdd);
+			grubwars.players[targetId].effects.push(...effectsToAdd);
+			changeQuantity(playerId, item, -amountUsed);
+			if (amountUsed !== quantity) response += `You could only use ${count(amountUsed, easyName)} instead of ${quantity}. `;
+			if (currentBPEffects.length === 3) {
+				response += stealByBullying(grubwars, targetId, currentBPEffects.map(effect => effect.name.split("-")[1]));
+			} else {
+				response += `There are now ${count(currentBPEffects.length, easyName)} on ${target.preferredName}! When they reach 3, they will be stolen from!`;
+			}
+		} break;
 			
 		default:
 			response += "Unknown item selected...";
@@ -431,6 +461,42 @@ async function throwItem ({ playerId, item, quantity, targetId }) {
 	saveState(grubwars);
 	
 	return [isSuccess, response];
+}
+
+function stealByBullying (grubwars, playerId, bullyIds) {
+	let inventoryItems = [];
+	let player = grubwars.players[playerId];
+	let inventoryItemNames = Object.keys(player.inventory);
+	let thingsBulliesGet = [];
+	for (let x of new Array(bullyIds.length).fill(0)) {
+		thingsBulliesGet.push({});
+	}
+	for (let itemName of inventoryItemNames) {
+		inventoryItems.push(...new Array(player.inventory[itemName]).fill(itemName));
+	}
+	for (let item of inventoryItems) {
+		let playerNumber = Math.floor(Math.random() * bullyIds.length);
+		let playerWhoGetsItem = bullyIds[playerNumber];
+		
+		// add it to their inventory
+		if (!(item in grubwars.players[playerWhoGetsItem].inventory)) grubwars.players[playerWhoGetsItem].inventory[item] = 0;
+		grubwars.players[playerWhoGetsItem].inventory[item]++;
+		
+		// add it to list
+		if (!(item in thingsBulliesGet[playerNumber])) thingsBulliesGet[playerNumber][item] = 0;
+		thingsBulliesGet[playerNumber][item]++;
+	}
+	
+	grubwars.players[playerId].inventory = {};
+	grubwars.players[playerId].effects = grubwars.players[playerId].effects.filter(effect => !effect.name.startsWith("bullyingPower"));
+	
+	return thingsBulliesGet.map(
+		(things, index) => 
+			grubwars.players[bullyIds[index]].preferredName + " got " +
+			commaListify(Object.entries(things).map(
+				([itemName, quantity]) => count(quantity, items[itemName.split("-")[0]].name)
+			)) + "!"
+	).join(" ");// turns quantity object into list; info about who stole what
 }
 
 export {

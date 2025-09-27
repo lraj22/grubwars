@@ -34,6 +34,12 @@ export function count (quantity, itemName) {
 	return quantity + " " + itemName + ((quantity === 1) ? "" : pluralizer);
 }
 
+export function commaListify (list) {
+	let lastIndex = list.length - 1;
+	if (list.length > 1) list[lastIndex] = "and " + list[lastIndex];
+	return ((list.length > 2) ? list.join(", ") : list.join(" "));
+}
+
 export function effectsToText (effects) {
 	let effectsCombined = {};
 	let now = Date.now();

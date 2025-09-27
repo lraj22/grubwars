@@ -75,15 +75,13 @@ Wine:
 - (use) every 5 grapes = +0.1x multiplier, i.e. 25 grapes = 1.5x multiplier (for points and damage). throw success rate drops to (90 - number of grapes)%, minimum 50%. Wears off after 3 hours <br>
 - (throw) target's attacks are (number of grapes / 2)% maximum 50% less effective; their success rates also drop to (90 - number of grapes)%, minimum 50%. Wears off after 3 hours <br>
 
-More to be added.
-
 ### Combinations
 
 Pizza Box: (use) need 4 pizza slices, +75 pts (throw) -20 pts & target loses random(2-4) pizza slices <br>
 Grapes: (use) need 20+ grapes, make wine; more grapes, more potent wine (throw) -2 pts <br>
-<!--
 Bullying Power: (use/throw) if 3 people use this towards the same target, that target's inventory & lunch money is stolen and redistributed between the bullies <br>
 
+<!--
 ### Spells
 
 Curse of Starvation: (use/throw) target loses points each hour until they **use** an item. Useful if a player stockpiles points and then goes offline <br>
@@ -93,10 +91,15 @@ Boon of Giving: (use/throw) full team has +10% point bonus for 45 minutes <br>
 Curse of Confiscation:
 - (use) **everyone** is searched (including your own team), items have 40% chance of being confiscated <br>
 - (throw) target is searched, items have 70% chance of being confiscated <br>
+-->
 
 ### School Staff
 
 Trash Grabber: (use) +50 pts (throw) take 1 item of choice from target <br>
+
+More to be added.
+
+<!--
 Citation: (use/throw) target's attack has 10% chance of backfiring, only then does this citation expire <br>
 
 ### Misc

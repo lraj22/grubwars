@@ -7,14 +7,20 @@ import {
 	userRef,
 } from "./datahandler.js";
 import getBlock from "./blocks.js";
-import { count, effectsToText, getTeamOf, getUserAt } from "./helper.js";
+import {
+	commaListify,
+	count,
+	effectsToText,
+	getTeamOf,
+	getUserAt,
+} from "./helper.js";
 import {
 	grubwarsEventChannelId,
 	helpGuides,
 	items,
 	pickRandomWeighted,
 	randRange,
-	weightings
+	weightings,
 } from "./grubwars-data.js";
 import { throwItem, useItem } from "./grubwars.js";
 
@@ -48,12 +54,6 @@ function isSameUtcDay (time1, time2) {
 	time1 = new Date(time1);
 	time2 = new Date(time2);
 	return ((time1.getUTCFullYear() === time2.getUTCFullYear()) && (time1.getUTCMonth() === time2.getUTCMonth()) && (time1.getUTCDate() === time2.getUTCDate()));
-}
-
-function commaListify (list) {
-	let lastIndex = list.length - 1;
-	if (list.length > 1) list[lastIndex] = "and " + list[lastIndex];
-	return ((list.length > 2) ? list.join(", ") : list.join(" "));
 }
 
 function timeDiffToString (time1, time2) {
