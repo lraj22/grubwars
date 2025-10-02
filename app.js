@@ -190,7 +190,7 @@ app.command(/^\/grubwars-(use|throw)$/, async (interaction) => {
 	// ensure they are registered
 	let currentTeam = getTeamOf(playerId);
 	if (!currentTeam) {
-		log(`❌ ${intRef} tried to claim items but is not registered.`);
+		log(`❌ ${intRef} tried to use/throw items but is not registered.`);
 		await interaction.respond({
 			"response_type": "ephemeral",
 			"text": "You are not registered for GrubWars Summer 2025! Please join a team first using `/grubwars-join`.",
@@ -214,6 +214,46 @@ app.command(/^\/grubwars-(use|throw)$/, async (interaction) => {
 		"blocks": getBlock("useThrow", {
 			"method": method,
 			"methodUpper": method[0].toUpperCase() + method.slice(1),
+			"inventory": inventory,
+		}),
+		"delete_original": true,
+	});
+});
+
+app.command("/grubwars-give", async (interaction) => {
+	// acknowledge & log
+	await interaction.ack();
+	await logInteraction(interaction);
+	let grubwars = getGrubwars();
+	let intRef = await userRef(interaction);
+	let playerId = interaction.body.user_id;
+	let method = interaction.command.command.split("-")[1];
+	
+	// ensure they are registered
+	let currentTeam = getTeamOf(playerId);
+	if (!currentTeam) {
+		log(`❌ ${intRef} tried to use/throw items but is not registered.`);
+		await interaction.respond({
+			"response_type": "ephemeral",
+			"text": "You are not registered for GrubWars Summer 2025! Please join a team first using `/grubwars-join`.",
+		});
+		return;
+	}
+	
+	let inventory = inventoryListify(grubwars, playerId);
+	if (inventory.length === 0) {
+		return await interaction.respond({
+			"response_type": "ephemeral",
+			"blocks": getBlock("closableText", {
+				"text": "You have nothing which can be given.",
+			}),
+			"delete_original": true,
+		});
+	}
+	
+	await interaction.respond({
+		"response_type": "ephemeral",
+		"blocks": getBlock("give", {
 			"inventory": inventory,
 		}),
 		"delete_original": true,
@@ -365,7 +405,11 @@ app.action("confirm-ut", async (interaction) => {
 		return await ephMessage(`You must specify a target when you throw an item.`);
 	}
 	
-	// time to process the item!
+	if (targetId && !(targetId in grubwars.players)) {
+		return await ephMessage("That person... isn't even in Grubwars. Are you sure you selected the right person?");
+	}
+	
+// time to process the item!
 	let isSuccess = true;
 	
 	if ((method === "use") && (targetId)) response += "By the way, the target you selected has been ignored since you are *using* this item instead of *throwing* it.\n";
@@ -409,6 +453,74 @@ app.action("confirm-ut", async (interaction) => {
 		// don't delete original, just post a closable ephemeral message
 		return await ephMessage(response);
 	}
+});
+
+app.action("confirm-give", async (interaction) => {
+	// acknowledge & log
+	await interaction.ack();
+	// await logInteraction(interaction); // no need, we log it in more detail
+	let grubwars = getGrubwars();
+	let intRef = await userRef(interaction);
+	let playerId = interaction.body.user.id;
+	let player = grubwars.players[playerId];
+	let response = `<@${playerId}> `;
+	
+	async function ephMessage (message) {
+		return await interaction.client.chat.postEphemeral({
+			"channel": interaction.body.channel.id,
+			"user": playerId,
+			"text": response,
+			"blocks": getBlock("closableText", {
+				"text": message,
+			}),
+		});
+	}
+	
+	let { item, quantity, target: targetId } = getValues(interaction);
+	
+	// make sure quantity is valid
+	quantity = ((typeof quantity === "string") ? quantity : "1");
+	quantity = parseInt(quantity);
+	if (isNaN(quantity)) {
+		return await ephMessage("The quantity must be an integer (1, 2, ..., max) or blank (1).");
+	}
+	
+	// make sure item is valid
+	if (typeof item !== "string") {
+		return await ephMessage("Please select an item.");
+	}
+	
+	// ensure target is valid
+	if (typeof targetId !== "string") {
+		return await ephMessage("Please select someone to give stuff to. :heavysob:");
+	}
+	
+	let processingName = item.split("-")[0];
+	let availableQuantity = player.inventory[item] || 0;
+	let easyName = items[processingName].name;
+	
+	if (availableQuantity < quantity) {
+		return await ephMessage(`You don't have ${count(quantity, easyName)}, only ${availableQuantity}.`);
+	}
+	
+	if (!(targetId in grubwars.players)) {
+		return await ephMessage("That person... isn't even in Grubwars. Are you sure you selected the right person?");
+	}
+	
+	// time to process the item!
+	grubwars.players[playerId].inventory[item] -= quantity;
+	if (!(item in grubwars.players[targetId].inventory)) grubwars.players[targetId].inventory[item] = 0;
+	grubwars.players[targetId].inventory[item] += quantity;
+	saveState(grubwars);
+	
+	// remove original interface, operation success
+	await interaction.respond({ "delete_original": true });
+	
+	// post message
+	return await interaction.client.chat.postMessage({
+		"channel": interaction.body.channel.id,
+		"text": `<@${playerId}> just gave ${grubwars.players[targetId].preferredName} ${count(quantity, easyName)}!`,
+	});
 });
 
 app.action("tg-steal-one", async (interaction) => {
@@ -506,7 +618,7 @@ app.action(/^join-(hackgrub|snackclub)$/, async (interaction) => {
 });
 
 // they selected something in the use/throw interface - no relevance to us until cancel/confirm
-app.action(/^ut-.+$/, async (interaction) => {
+app.action(/^ignore-.+$/, async (interaction) => {
 	await interaction.ack();
 });
 
@@ -518,4 +630,4 @@ async function closeSelf (interaction) {
 	});
 }
 app.action("close-self", closeSelf);
-app.action("cancel-ut", closeSelf);
+app.action(/^cancel-.+$/, closeSelf);

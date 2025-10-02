@@ -176,7 +176,7 @@ blocks.useThrow = JSON.stringify([
 				},
 				"value": "{method}"
 			},
-			"action_id": "ut-select-method"
+			"action_id": "ignore-ut-select-method"
 		}
 	},
 	{
@@ -193,7 +193,7 @@ blocks.useThrow = JSON.stringify([
 				"emoji": true
 			},
 			"options": "r:inventory",
-			"action_id": "ut-select-item"
+			"action_id": "ignore-ut-select-item"
 		}
 	},
 	{
@@ -205,7 +205,7 @@ blocks.useThrow = JSON.stringify([
 				"text": "Default: one (1)",
 				"emoji": true
 			},
-			"action_id": "ut-select-quantity"
+			"action_id": "ignore-ut-select-quantity"
 		},
 		"label": {
 			"type": "plain_text",
@@ -229,7 +229,7 @@ blocks.useThrow = JSON.stringify([
 				"text": "Default: yourself",
 				"emoji": true
 			},
-			"action_id": "ut-select-target"
+			"action_id": "ignore-ut-select-target"
 		}
 	},
 	{
@@ -262,6 +262,95 @@ blocks.useThrow = JSON.stringify([
 	}
 ]);
 
+blocks.give = JSON.stringify([
+	{
+		"type": "section",
+		"text": {
+			"type": "mrkdwn",
+			"text": "You're sending items in your inventory to others. How generous!"
+		}
+	},
+	{
+		"type": "divider"
+	},
+	{
+		"type": "section",
+		"text": {
+			"type": "mrkdwn",
+			"text": "*Which item?*"
+		},
+		"accessory": {
+			"type": "static_select",
+			"placeholder": {
+				"type": "plain_text",
+				"text": "Select an item (required)",
+				"emoji": true
+			},
+			"options": "r:inventory",
+			"action_id": "ignore-give-select-item"
+		}
+	},
+	{
+		"type": "input",
+		"element": {
+			"type": "plain_text_input",
+			"placeholder": {
+				"type": "plain_text",
+				"text": "Default: one (1)",
+				"emoji": true
+			},
+			"action_id": "ignore-give-select-quantity"
+		},
+		"label": {
+			"type": "plain_text",
+			"text": "How many?",
+			"emoji": true
+		}
+	},
+	{
+		"type": "divider"
+	},
+	{
+		"type": "section",
+		"text": {
+			"type": "mrkdwn",
+			"text": "*You are giving items to:*"
+		},
+		"accessory": {
+			"type": "users_select",
+			"action_id": "ignore-give-select-target"
+		}
+	},
+	{
+		"type": "divider"
+	},
+	{
+		"type": "actions",
+		"elements": [
+			{
+				"type": "button",
+				"text": {
+					"type": "plain_text",
+					"text": ":x: Cancel",
+					"emoji": true
+				},
+				"value": "cancel",
+				"action_id": "cancel-ut"
+			},
+			{
+				"type": "button",
+				"text": {
+					"type": "plain_text",
+					"text": ":white_check_mark: Go!",
+					"emoji": true
+				},
+				"value": "confirm",
+				"action_id": "confirm-give"
+			}
+		]
+	}
+]);
+
 blocks.tgStealOne = JSON.stringify([
 	{
 		"type": "section",
@@ -287,7 +376,7 @@ blocks.tgStealOne = JSON.stringify([
 				"emoji": true
 			},
 			"options": "r:inventory",
-			"action_id": "ut-select-item"
+			"action_id": "ignore-tg-select-item"
 		}
 	},
 	{

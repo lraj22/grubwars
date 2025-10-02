@@ -68,7 +68,7 @@ const items = {
 		"name": "Lemon Drizzle Cake",
 		"rarity": "rare",
 		"use": "+20% points for next hour",
-		"throw": "target has -20% points for next 12 hours",
+		"throw": "target has -30% points for next 12 hours",
 		"image": "https://www.serendipitycakecompany.co.uk/wp-content/uploads/2020/04/Lemon-Drizzle-Cake.jpeg",
 	},
 	"trashGrabber": {
@@ -90,8 +90,8 @@ const items = {
 	"wine": {
 		"name": "Wine",
 		"rarity": "epic",
-		"use": "points multiplier based on number of grapes: 20 grapes = 1.4x, 25 grapes = 1.5x, 30 grapes = 1.6x, etc.\nAlso, your throw success rate drops to random(50–70)%", // en dash
-		"throw": "target's attacks are 10% less effective, and their throw success rate also drops to random(50–70)%", // en dash
+		"use": "points multiplier based on number of grapes: 20 grapes = 1.4x, 25 grapes = 1.5x, 30 grapes = 1.6x, etc.\nAlso, your throw success rate drops to 90%, and then down 1% more for every grape used (lowest 50%)",
+		"throw": "target's attacks are 1% less effective for every 2 grapes used (lowest 50%)\nAlso, their throw success rate drops to 90%, and then down 1% more for every grape used (lowest 50%)",
 		"properties": ["confiscatable"],
 		"image": "https://img.freepik.com/premium-vector/bottle-spirit-drink-stemware-no-alcohol-allowed-sign-no-drinking-sign-prohibiting-alcohol-beverages-ban-wine-drink-prohibition-sign-icon-illustration-no-binge-icon-stop-alcohol_91248-1073.jpg",
 	},
@@ -153,12 +153,17 @@ To use or throw an item, run \`/grubwars-use\` and select the item you want to u
 Using an item has a 100% success rate, while throwing has a 90% success rate. Some items affect the success rates of throws, so make sure you are aware of how likely you are to succeed!
 
 You can throw items at ANYONE, including yourself and your teammates. Be careful!`,
+	
+	// giving items to other people help guide
+	"giving":
+`If you feel like giving any of your inventory items to anyone else in the game, you can! Use \`/grubwars-give\`, and select what you want to give, how much of it, and who to give it to. You can give anyone items, so make sure you're giving items to the right person!`,
 };
 
 const easyHelpNames = {
 	"general": "General help (default)",
 	"claiming": "Claiming items",
 	"useThrow": "Using and throwing items",
+	"giving": "Giving items to other people",
 };
 
 // add all items to the help guides

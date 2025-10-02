@@ -20,10 +20,10 @@ Claim the gift in this channel
 `/grubwars-use` <br>
 Use an item you have
 
-<!--
 `/grubwars-give` <br>
 Give an item you have to someone else
 
+<!--
 `/grubwars-shop` <br>
 Open the shop to buy stuff with lunch money
 -->
